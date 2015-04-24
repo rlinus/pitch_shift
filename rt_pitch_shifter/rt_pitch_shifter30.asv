@@ -1,0 +1,266 @@
+#include <iostream>
+#include <stdlib.h>
+#include <random>
+#include "mex.h"
+#include "Stk.h"
+#include "RtAudio.h"
+#include "RubberBandStretcher.h"
+
+using namespace std;
+using namespace stk;
+using namespace RubberBand;
+
+float frameAmplitude(float *samples);
+
+const int frameSize = 64;
+const int sampleRate = 44100;                       
+
+float *output;
+int i_frame;
+int i_frame_session;
+
+int i_low_amp;
+float threshold = 0.005f;
+int minlowampduration_f = 7;
+
+const size_t data_array_length = 360*44100;
+float input_signal[data_array_length];
+float output_signal[data_array_length];
+
+int session_starts[1000];
+
+RtAudio dac;
+
+RubberBandStretcher::Options options =  RubberBandStretcher::OptionProcessRealTime |
+                                        RubberBandStretcher::OptionFormantPreserved |
+                                        RubberBandStretcher::OptionWindowShort |
+                                        RubberBandStretcher::OptionPitchHighConsistency;
+RubberBandStretcher shifter(sampleRate,1,options,1.0,pow(2.0,0/12.0));
+
+int session_duration_f = 700;
+double pitch_factors[1000] ;
+int pitchchange_times_f[1000];
+int num_changes = 0;
+int i_change = 0;
+
+
+
+void init_global_vars(void){
+    i_frame_session = session_duration_f;
+    i_frame = -1;
+    i_low_amp = 0;
+    
+    i_change = 0;
+    
+    shifter.reset();
+    shifter.setPitchScale(1.0);
+    
+    minlowampduration_f = 7;
+    threshold = 0.005f;
+    
+    memset(input_signal,0,sizeof(input_signal));
+    memset(output_signal,0,sizeof(output_signal));
+}
+
+int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
+         double streamTime, RtAudioStreamStatus status, void *dataPointer )
+{
+    i_frame++;
+    i_frame_session++;
+
+	if(status == RTAUDIO_INPUT_OVERFLOW){
+		mexPrintf("overflow!\n");
+	} else if (status == RTAUDIO_OUTPUT_UNDERFLOW){
+		mexPrintf("underflow!\n");
+	}
+    
+    if(nBufferFrames!=frameSize){
+        mexPrintf("not enough samples received: %i,frame: %i\n",nBufferFrames, i_frame);
+    }
+
+	register float *ibuffer = (float *) inputBuffer;
+	register float *obuffer = (float *) outputBuffer;
+    
+    memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
+    
+    float amp = frameAmplitude(ibuffer);
+    
+    if(amp < threshold){
+        ++i_low_amp;
+    }else{
+        i_low_amp = 0;
+    }
+    
+    if(i_frame_session >= session_duration_f && i_low_amp >= minlowampduration_f){
+        shifter.setPitchScale(pitch_factors[i_change]);
+        i_frame_session=0;
+        session_starts[i_change] = i_frame;
+        if(i_change < num_changes-1) i_change++;
+    }
+     
+    shifter.process(&ibuffer, nBufferFrames,0);
+    
+    int r = shifter.retrieve(&output, nBufferFrames);
+    
+    memcpy(&output_signal[i_frame*frameSize],output,r*sizeof(float));
+    
+
+	for (int i=0; i<frameSize; i++ ){       
+		*obuffer++ = output_signal[i_frame*frameSize+i];
+    	*obuffer++ = output_signal[i_frame*frameSize+i];
+	}
+    
+	return 0;
+}
+
+
+void rt_pitch_shifter(void)
+{    
+    
+    output = new float[frameSize];
+    
+    Stk::setSampleRate( sampleRate );
+    
+    RtAudio::StreamParameters oparameters;
+    oparameters.deviceId = 1; //dac.getDefaultOutputDevice();
+	oparameters.nChannels = 2;
+
+	RtAudio::StreamParameters iparameters;
+	iparameters.deviceId = 1; //dac.getDefaultInputDevice();
+	iparameters.nChannels = 1;
+    
+    unsigned int bufferFrames = frameSize;
+    
+    
+    shifter.setMaxProcessSize(bufferFrames);
+    
+    
+	try {
+		dac.openStream( &oparameters, &iparameters, RTAUDIO_FLOAT32, (unsigned int)Stk::sampleRate(), &bufferFrames, &tick, NULL, NULL);
+	}
+	catch ( RtAudioError &error ) {
+		error.printMessage();
+		return;
+	}
+    
+    try {
+		dac.startStream();
+	}
+	catch ( RtAudioError &error ) {
+		error.printMessage();
+		return;
+	}
+    
+    int lat_hw = dac.getStreamLatency();
+    int lat_sw = shifter.getLatency();
+    
+    mexPrintf("HW latency: %i, SW latency: %i\n",lat_hw,lat_sw);
+    
+    
+    return;
+}
+
+void mexFunction(int nlhs, mxArray *plhs[],
+                 int nrhs, const mxArray *prhs[]) {
+    
+    
+    
+    if(nrhs == 0){
+        if(nlhs>0) {
+            mexErrMsgIdAndTxt("rt_pitch_shifter:nlhs", "Too many output arguments.");
+        }
+        return;
+    } else {
+        if( !mxIsDouble(prhs[0]) || mxIsComplex(prhs[0]) || mxGetNumberOfElements(prhs[0])!=1 )) {
+            mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "First input must be a scalar.");
+            return;
+        }
+        
+        int v1 = (int) floor(mxGetScalar(prhs[0]));
+        
+        if(v1 < 0){
+            try {
+                dac.closeStream();
+            }
+            catch ( RtAudioError &error ) {
+                error.printMessage();
+                return;
+            }
+
+            delete[] output;
+
+            mxArray *input_signal_m = mxCreateDoubleMatrix((i_frame+1)*frameSize,1,mxREAL);
+            double *input_signal_mp = mxGetPr(input_signal_m);
+            mxArray *output_signal_m = mxCreateDoubleMatrix((i_frame+1)*frameSize,1,mxREAL);
+            double *output_signal_mp = mxGetPr(output_signal_m);
+
+            for(int i = 0; i<(i_frame+1)*frameSize; ++i){
+                input_signal_mp[i] = (double) input_signal[i];
+                output_signal_mp[i] = (double) output_signal[i];
+            }
+
+            mxArray *session_starts_m = mxCreateDoubleMatrix(i_session+1,1,mxREAL);
+            double *session_starts_mp = mxGetPr(session_starts_m);
+
+            for(int i = 0; i<i_session+1; ++i){
+                session_starts_mp[i] = (double) session_starts[i]*frameSize+1;
+            }
+
+            if(nlhs >= 1) plhs[0] = input_signal_m;
+            if(nlhs >= 2) plhs[1] = output_signal_m;
+            
+            mexPrintf("Number of processed frames: %i\n",i_frame);
+
+            return;
+        } else {
+            if(nlhs>0) {
+                mexErrMsgIdAndTxt("rt_pitch_shifter:nlhs", "Too many output arguments.");
+            }
+            
+            if( nrhs < 2 || !mxIsDouble(prhs[1]) || mxIsComplex(prhs[1]) || (mxGetM(prhs[0])>1 && mxGetN(prhs[0])>1)) {
+                mexErrMsgIdAndTxt("rt_pitch_shifter:notVector", "Second input must be a vector.");
+                return;
+            }
+            
+            minlowampduration_f = v1;
+            
+            num_changes = mxGetNumberOfElements(prhs[1]);
+            
+            double *prhs1 = mxGetPr(prhs[1]);
+            
+            for(int i = 0; i < num_changes; ++i){
+                pitch_factors[i] = prhs1[i];
+            }
+            
+            if(nrhs>=3){
+                if( !mxIsDouble(prhs[3]) || mxIsComplex(prhs[3]) || mxGetNumberOfElements(prhs[3])!=1 )) {
+                    mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "Third input must be a scalar.");
+                    return;
+                }
+                minlowampduration_f = (int) floor(mxGetScalar(prhs[3]));
+            }
+            
+            if(nrhs>=4){
+                if( !mxIsDouble(prhs[4]) || mxIsComplex(prhs[4]) || mxGetNumberOfElements(prhs[4])!=1 )) {
+                    mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "Fourth input must be a scalar.");
+                    return;
+                }
+                minlowampduration_f = (float) mxGetScalar(prhs[3]);
+            }
+            
+            init_global_vars();
+            rt_pitch_shifter();
+        }
+    }
+    
+    return;
+}
+
+float frameAmplitude(float *samples) {
+    float sum = 0;
+    for(int i = 0; i < frameSize; ++i) {
+        sum += abs(samples[0]);
+    }
+    return sum/frameSize;
+        
+}
