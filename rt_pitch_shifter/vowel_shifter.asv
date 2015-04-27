@@ -90,7 +90,7 @@ volatile int is_finished = 0;
 bool do_var = true;
 double std_dev = 50.0;
 double delta = 1;
-int T_var_f = 64;
+int T_var_f = 1;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
 
@@ -492,8 +492,7 @@ void gen_drum_sound(double f, double amp){
 }
 
 double draw_var(void){
-    static double v = 0;
-    v = (1-delta) * v + delta * distribution_pitch_var(generator);
+    static double v = (1-delta) * v + delta * distribution_pitch_var(generator);
     //double v = distribution_pitch_var(generator);
     //if(v > 2*std_var) v=2*std_var;
     //if(v < -2*std_var) v=-2*std_var;

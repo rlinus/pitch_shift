@@ -1,18 +1,19 @@
-function data = vowel_exp_plot_each_trial(data)
-    data.ref = 'time variant';
-    data.invalid_sessions = [29,56];
+function data = vowel_exp_plot(data)
+    %data.ref = 'time variant';
+    data.ref = 'constant';
+    data.invalid_sessions = [];
     data.ref_freq = data.piano_freq;
     data.latency_ms=20;
     if data.mode==1
-        data.time_after_voice_onset_ms = 3800;
+        data.time_after_voice_onset_ms = 2800;
         
         data.time_after_voice_onset_ms = round(data.time_after_voice_onset_ms/data.timestep)*data.timestep;
         before = 0;
         after = data.time_after_voice_onset_ms/data.timestep;
         data.time = 0:data.timestep:data.time_after_voice_onset_ms;
     else
-        data.time_before_shift_ms = 200;
-        data.time_after_shift_ms = 1200;
+        data.time_before_shift_ms = 500;
+        data.time_after_shift_ms = 1000;
         
         data.time_before_shift_ms = round(data.time_before_shift_ms/data.timestep)*data.timestep;
         data.time_after_shift_ms = round(data.time_after_shift_ms/data.timestep)*data.timestep;
@@ -23,7 +24,7 @@ function data = vowel_exp_plot_each_trial(data)
     
     for i=1:data.num_sessions
         if(data.mode==1) %shift before voice onset
-            p =find(data.voiced_regions_s{i},1);
+            p =find(data.voiced_regions_s{i} & (data.f0_time_s{i}>=data.voice_onset_ms(i)),1);
             if isempty(p)
                 data.invalid_sessions(end+1) = i;
                 fprintf('session %i is invalid: no voiced regions.\n',i);
