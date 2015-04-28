@@ -1,8 +1,8 @@
 function data = vowel_exp_analysis(data)
-    data.sex = 'male';
-    data.max_pitch_change = 4;
+    data.sex = 'female';
+    data.max_pitch_change = 0.5; %[Hz/ms]
     data.frame_length = 2.5*40; %[ms]
-    data.timestep = 10; %[ms]
+    data.timestep = 10/2; %[ms]
     data.min_duration_of_voiced_regions = 150; %[ms]
 
     if strcmpi(data.sex,'male')
@@ -10,15 +10,15 @@ function data = vowel_exp_analysis(data)
         data.f0_low=100;
         data.f0_high=150; 
     else
-        data.F0MinMax = [120 400];
-        data.f0_low=120;
-        data.f0_high=350;
+        data.F0MinMax = [300 500];
+        data.f0_low=350;
+        data.f0_high=450;
     end
     
     for i=1:data.num_sessions
         [data.f0_time_s{i},data.f0_value_s{i}]=shrp(data.y_r{i},data.Fs,data.F0MinMax,data.frame_length,data.timestep);
         [data.f0_time_ps_s{i},data.f0_value_ps_s{i}]=shrp(data.y_ps{i},data.Fs,data.F0MinMax,data.frame_length,data.timestep);
-        data.voiced_regions_s{i} = [false; abs(diff(data.f0_value_s{i}))<data.max_pitch_change] & data.f0_value_s{i} < data.f0_high & data.f0_value_s{i} > data.f0_low;
+        data.voiced_regions_s{i} = [false; abs(diff(data.f0_value_s{i}))<data.max_pitch_change*data.timestep] & data.f0_value_s{i} < data.f0_high & data.f0_value_s{i} > data.f0_low;
         
         l=0;
         for j=1:length(data.voiced_regions_s{i})

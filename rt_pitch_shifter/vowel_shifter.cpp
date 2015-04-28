@@ -10,6 +10,8 @@
 #include "Rhodey.h"
 #include "BeeThree.h"
 #include "Drummer.h"
+//#include "PitShift.h"
+//#include "LentPitShift.h"
 
 using namespace std;
 using namespace stk;
@@ -21,6 +23,7 @@ void gen_beep_sound(double f, double amp);
 void gen_piano_sound(double f, double amp);
 void gen_drum_sound(double f, double amp);
 double draw_var(void);
+void lent_process(float *input, float *output);
 
 const int frameSize = 64;
 const int sampleRate = 44100; 
@@ -35,6 +38,8 @@ RubberBandStretcher::Options options =  RubberBandStretcher::OptionProcessRealTi
                                         RubberBandStretcher::OptionTransientsSmooth |
                                         RubberBandStretcher::OptionPitchHighConsistency;
 RubberBandStretcher shifter(sampleRate,1,options,1.0,1.0);
+
+//PitShift lentshifter = PitShift();
 
 float output[frameSize];
 float *output_p = output;
@@ -87,7 +92,7 @@ float piano_sound[piano_sound_length];
 
 volatile int is_finished = 0;
 
-bool do_var = true;
+bool do_var = false;
 double std_dev = 50.0;
 double delta = 1;
 int T_var_f = 64;
@@ -108,8 +113,10 @@ void init(void){
     shifter.reset();
     if(shift_after_voice_onset){
         shifter.setPitchScale(1.0);
+        //lentshifter.setShift(1.0);
     } else {
         shifter.setPitchScale(pitch_factor);
+        //lentshifter.setShift(pitch_factor);
     }
     
     memset(input_signal,0,sizeof(input_signal));
@@ -117,7 +124,7 @@ void init(void){
             
     gen_beep_sound(600,0.03);
     gen_piano_sound(ref_sound_freq, 0.1);
-    gen_drum_sound(92.5, 0.5); //92.5: Closed HiHat; 65.4: Base Drum 1
+    gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
     
     //init moving average
     for(int i = 0; i<mov_avg_width; ++i){
@@ -153,6 +160,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         if(!do_var){
             if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f){
                 shifter.setPitchScale(pitch_factor);
+                //lentshifter.setShift(pitch_factor);
                 //mexPrintf("pitch: %f,frame: %i\n",amp, i_frame);
             } 
         }else{
@@ -163,6 +171,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
             if(voice_onset_f > -1 && i_frame - voice_onset_f >= shift_onset_f && i_frame - voice_onset_f < shift_onset_f + shift_duration_f){
                 if((i_frame-i_frame_start)%T_var_f == 0){
                     shifter.setPitchScale(pitch_factor*draw_var());
+                    //lentshifter.setShift(pitch_factor*draw_var());
                 }
             }
             
@@ -170,11 +179,13 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         
         if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f + shift_duration_f){
                 shifter.setPitchScale(1.0);
+                //lentshifter.setShift(1.0);
                 //mexPrintf("pitch: %f,frame: %i\n",amp, i_frame);
         }
     }else if(do_var){
         if(i_frame%T_var_f == 0){
             shifter.setPitchScale(pitch_factor*draw_var());
+            //lentshifter.setShift(pitch_factor*draw_var());
         }
     }
     
@@ -194,11 +205,14 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     num_sample_available[i_frame] = r;
     sw_latency[i_frame] = shifter.getLatency();
     
+    //the latency of the shifter is 993 samples for pitch_factor = 1.0 (measured). I add two frames latency, to get consitency after shifts, therefore the software latency is 993+2*64=1121 samples
     if(r>=frameSize && i_frame+1>=18){
         shifter.retrieve(&output_p, frameSize);
         memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
     }
     
+//     lent_process(ibuffer,output_p);
+//     memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
     
         
     for (int i=0; i<frameSize; i++ ){  
@@ -499,3 +513,10 @@ double draw_var(void){
     //if(v < -2*std_var) v=-2*std_var;
     return pow(2.0,v/1200.0);
 }
+
+// void lent_process(float *input, float *output){
+//     for(int i = 0; i<frameSize; ++i){
+//         output[i] = (float) lentshifter.tick((StkFloat) input[i]);
+//     }
+//     return;
+// }

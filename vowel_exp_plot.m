@@ -12,8 +12,8 @@ function data = vowel_exp_plot(data)
         after = data.time_after_voice_onset_ms/data.timestep;
         data.time = 0:data.timestep:data.time_after_voice_onset_ms;
     else
-        data.time_before_shift_ms = 500;
-        data.time_after_shift_ms = 1000;
+        data.time_before_shift_ms = 400;
+        data.time_after_shift_ms = 1500;
         
         data.time_before_shift_ms = round(data.time_before_shift_ms/data.timestep)*data.timestep;
         data.time_after_shift_ms = round(data.time_after_shift_ms/data.timestep)*data.timestep;
@@ -83,9 +83,9 @@ function data = vowel_exp_plot(data)
         
         plot(p1,[data.f0_time_s{i}(1), data.f0_time_s{i}(end)],[data.ref_freq,data.ref_freq],'k');
         hold(p1,'on');
-        plot(p1,[data.voice_onset_ms(i), data.voice_onset_ms(i)],[data.ref_freq-20 data.ref_freq+20],'k');
+        plot(p1,[data.voice_onset_ms(i), data.voice_onset_ms(i)],[0.9*data.ref_freq 1.1*data.ref_freq],'k');
         if(data.mode==2)
-            plot(p1,[data.voice_onset_ms(i)+data.shift_onset_ms(i), data.voice_onset_ms(i)+data.shift_onset_ms(i)],[data.ref_freq-20 data.ref_freq+20],'k','LineStyle', '--');
+            plot(p1,[data.voice_onset_ms(i)+data.shift_onset_ms(i), data.voice_onset_ms(i)+data.shift_onset_ms(i)],[0.9*data.ref_freq 1.1*data.ref_freq],'k','LineStyle', '--');
         end
 %         if i~=data.num_shifts
 %             t_s = data.f0_time >= data.session_starts_ms(2*i-1) & data.f0_time < data.session_starts_ms(2*i+1);
@@ -96,19 +96,19 @@ function data = vowel_exp_plot(data)
         f0nan=nan(size(data.f0_value_s{i})); f0nan(data.voiced_regions_s{i})=data.f0_value_s{i}(data.voiced_regions_s{i});
         plot(p1,data.f0_time_s{i},data.f0_value_s{i},'b');
         plot(p1,data.f0_time_s{i},f0nan,'r');
-        plot(p1,data.f0_time_s{i},data.f0_value_ps_s{i},'y');
+        plot(p1,data.f0_time_s{i},data.f0_value_ps_s{i},'g');
         hold(p1,'off');
         
-        ylim(p1,[data.ref_freq-20 data.ref_freq+20]);
+        ylim(p1,[0.9*data.ref_freq 1.1*data.ref_freq]);
         xlim(p1,[data.f0_time_s{i}(1), data.f0_time_s{i}(end)]);
         ylabel(p1,'f0 [Hz]');
         
         plot(p2,data.f0_time_s{i},1200*log2(data.f0_value_s{i}/data.ref_freq),'b');
         hold(p2,'on');
-        plot(p2,data.f0_time_s{i},1200*log2(data.f0_value_ps_s{i}/data.ref_freq),'y');
+        plot(p2,data.f0_time_s{i},1200*log2(data.f0_value_ps_s{i}/data.ref_freq),'g');
         hold(p2,'off');
         ylim(p2,[-2*max([abs(data.pitch_levels_cents),50]) 2*max([abs(data.pitch_levels_cents),50])]);
-        %xlim(p2,[data.time(1), data.time(end)]);
+        xlim(p2,[data.f0_time_s{i}(1), data.f0_time_s{i}(end)]);
         ylabel(p2,'pitch [cents]');
         xlabel(p2,'time [ms]');
         
