@@ -1,5 +1,5 @@
 function data = vowel_exp_analysis(data)
-    data.sex = 'female';
+    data.sex = 'male';
     data.max_pitch_change = 0.5; %[Hz/ms]
     data.frame_length = 2.5*40; %[ms]
     data.timestep = 10/2; %[ms]

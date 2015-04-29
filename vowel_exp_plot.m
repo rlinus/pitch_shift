@@ -12,8 +12,8 @@ function data = vowel_exp_plot(data)
         after = data.time_after_voice_onset_ms/data.timestep;
         data.time = 0:data.timestep:data.time_after_voice_onset_ms;
     else
-        data.time_before_shift_ms = 400;
-        data.time_after_shift_ms = 1500;
+        data.time_before_shift_ms = 200;
+        data.time_after_shift_ms = 700;
         
         data.time_before_shift_ms = round(data.time_before_shift_ms/data.timestep)*data.timestep;
         data.time_after_shift_ms = round(data.time_after_shift_ms/data.timestep)*data.timestep;

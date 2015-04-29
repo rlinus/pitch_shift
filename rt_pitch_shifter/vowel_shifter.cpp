@@ -26,7 +26,9 @@ double draw_var(void);
 void lent_process(float *input, float *output);
 
 const int frameSize = 64;
-const int sampleRate = 44100; 
+const int sampleRate = 44100;
+
+//BeeThree instrument2 = BeeThree();
 
 RtAudio dac;
 
@@ -121,15 +123,16 @@ void init(void){
     
     memset(input_signal,0,sizeof(input_signal));
     memset(output_signal,0,sizeof(output_signal));
-            
+          
     gen_beep_sound(600,0.03);
     gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
-    
+
     //init moving average
     for(int i = 0; i<mov_avg_width; ++i){
         mov_avg(0.0f);
     }
+    
 }
 
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -482,8 +485,9 @@ void gen_beep_sound(double f, double amp){
 }
 
 void gen_piano_sound(double f, double amp){
+      
     //Instrmnt *instrument = new Rhodey();
-    Instrmnt *instrument = new BeeThree();
+    Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
     //Instrmnt *instrument = new Wurley();
     instrument->noteOn(f, amp);
     
