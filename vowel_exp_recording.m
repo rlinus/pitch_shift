@@ -2,16 +2,16 @@ function data = vowel_exp_recording
     data.frameSize = 64;
     data.Fs = 44100;
     
-    data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
+    data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
 
-    data.pitch_levels_cents = [-60 60];%[-60 -30 0 30 60];
+    data.pitch_levels_cents = [100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
-    data.num_sessions = 2;
+    data.num_sessions = 1;
     data.shift_duration_ms = 500;
-    data.voc_duration_ms = 1700;
+    data.voc_duration_ms = 5700;
     
-    data.piano_freq = 400;
+    data.piano_freq = 300;
     data.play_ref_whole_session = 1; %1: no, -1: yes
     
     data.rec_date = datetime('now');

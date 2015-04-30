@@ -38,7 +38,7 @@ RubberBandStretcher::Options options =  RubberBandStretcher::OptionProcessRealTi
                                         //RubberBandStretcher::OptionSmoothingOn |
                                         //RubberBandStretcher::OptionPhaseIndependent |
                                         RubberBandStretcher::OptionTransientsSmooth |
-                                        RubberBandStretcher::OptionPitchHighConsistency;
+                                        RubberBandStretcher::OptionPitchHighQuality;//Consistency;
 RubberBandStretcher shifter(sampleRate,1,options,1.0,1.0);
 
 //PitShift lentshifter = PitShift();
