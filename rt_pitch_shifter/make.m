@@ -74,6 +74,10 @@ function make(varargin)
     elseif strcmpi(varargin{1},'vowel_shifter')
         mex ../vowel_shifter.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include -I../rubberband-1.8.1/rubberband
         mex vowel_shifter.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj
+    elseif strcmpi(varargin{1},'vowel_shifter_pv')
+        mex ../vowel_shifter_pv.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include
+        mex ../smbPitchShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include
+        mex vowel_shifter_pv.obj smbPitchShift.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj
     else
         fprintf('invalid input\n');
     end
