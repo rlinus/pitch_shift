@@ -44,7 +44,7 @@ int sw_latency[data_array_length/frameSize];
 
 const int mov_avg_width = 5;
 
-const double threshold = 0.1;//0.02f;
+const double threshold = 0.02f;
 int voice_onset_f;
 int shift_onset_f;
 int shift_duration_f;
@@ -84,9 +84,9 @@ float piano_sound[piano_sound_length];
 volatile int is_finished = 0;
 
 bool do_var = false;
-double std_dev = 50.0;
-double delta = 1;
-int T_var_f = 64;
+double std_dev = 100.0;
+double delta = 0.2;
+int T_var_f = 4;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
 

@@ -9,7 +9,7 @@ function data = vowel_exp_recording
 
     data.num_sessions = 1;
     data.shift_duration_ms = 500;
-    data.voc_duration_ms = 5700;
+    data.voc_duration_ms = 4000;
     
     data.piano_freq = 300;
     data.play_ref_whole_session = 1; %1: no, -1: yes

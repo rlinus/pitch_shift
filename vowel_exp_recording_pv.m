@@ -4,7 +4,7 @@ function data = vowel_exp_recording_pv
     
     data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
 
-    data.pitch_levels_cents = [0];%[-60 -30 0 30 60];
+    data.pitch_levels_cents = [100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
     data.num_sessions = 1;
