@@ -8,7 +8,7 @@ function data = vowel_exp_analysis(data)
     if strcmpi(data.sex,'male')
         data.F0MinMax = [50 250];
         data.f0_low=100;
-        data.f0_high=150; 
+        data.f0_high=250; 
     else
         data.F0MinMax = [300 500];
         data.f0_low=350;

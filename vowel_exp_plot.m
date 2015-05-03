@@ -1,6 +1,7 @@
 function data = vowel_exp_plot(data)
-    %data.ref = 'time variant';
+
     data.ref = 'constant';
+    %data.ref = 'time variant';
     data.invalid_sessions = [];
     data.ref_freq = data.piano_freq;
     data.latency_ms=20;

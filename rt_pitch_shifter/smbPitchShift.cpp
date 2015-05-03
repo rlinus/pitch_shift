@@ -49,7 +49,7 @@
 // -----------------------------------------------------------------------------------------------------------------
 
 
-void smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, long osamp, float sampleRate, float *indata, float *outdata)
+void smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, long osamp, float sampleRate, float *indata, float *outdata, float f0)
 /*
 	Routine smbPitchShift(). See top of file for explanation
 	Purpose: doing pitch shifting while maintaining duration using the Short
@@ -153,6 +153,7 @@ void smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, 
 				gAnaFreq[k] = tmp;
 
 			}
+            
 
 			/* ***************** PROCESSING ******************* */
 			/* this does the actual pitch shifting */
@@ -217,7 +218,7 @@ void smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, 
 	}
 }
 
-void smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRate, float *indata, float *outdata)
+float smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRate, float *indata, float *outdata, int init_f0)
 /*
 	Routine smbPitchShift(). See top of file for explanation
 	Purpose: doing pitch shifting while maintaining duration using the Short
@@ -225,7 +226,7 @@ void smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRat
 	Author: (c)1999-2015 Stephan M. Bernsee <s.bernsee [AT] zynaptiq [DOT] com>
 */
 {
-    
+    static float f0;
 
 	static float gInFIFO[MAX_FRAME_LENGTH];
 	static float gFFTworksp[2*MAX_FRAME_LENGTH];
@@ -249,7 +250,7 @@ void smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRat
 	inFifoLatency = fftFrameSize-stepSize;
 
 	/* initialize our static arrays */
-	if (gInit == false) {
+	if (init_f0) {
 		memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
 		memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
 		memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
@@ -258,6 +259,8 @@ void smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRat
 		memset(gAnaFreq, 0, MAX_FRAME_LENGTH*sizeof(float));
 		memset(gAnaMagn, 0, MAX_FRAME_LENGTH*sizeof(float));
 		gInit = true;
+        
+        f0 = init_f0;
 	}
     
     memcpy(&gInFIFO[inFifoLatency], indata, (size_t) stepSize*sizeof(float));
@@ -309,6 +312,39 @@ void smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRat
         gAnaFreq[k] = tmp;
 
     }
+    
+    //f0 estimate
+    int f_i_index[MAX_FRAME_LENGTH/2+1];
+    int i = 0;
+    bool first = true;
+    float f = 0;
+//     for(k = 0; k <= fftFrameSize2; k++) {
+//         if(gAnaFreq[k] > f+f0 *3/2 && !first){
+//             f = gAnaFreq[i];
+//             ++i;
+//             first = true;
+//         }
+//         if(gAnaFreq[k] > f+f0 /2 && gAnaFreq[k] <= f+f0 *3/2) {
+//             if(first){
+//                 first =false;
+//                 f_i_index[i] = k;
+//             }else if(gAnaMagn[k]>gAnaMagn[k-1]){
+//                 f_i_index[i] = k;
+//             }
+//         }
+//     }
+    
+    float max = 0;
+    float fl = f0;
+    for(k = 0; k <= fftFrameSize2; k++) {
+        if(gAnaFreq[k] > fl /2 && gAnaFreq[k] <= fl *3/2 && gAnaMagn[k]>max) {
+            max = gAnaMagn[k];
+            f0 = gAnaFreq[k];
+        }
+    }
+    
+    //f0 = gAnaFreq[f_i_index[0]];
+    //f0 = f_i_index[0];
 
     /* ***************** PROCESSING ******************* */
     /* this does the actual pitch shifting */
@@ -370,6 +406,7 @@ void smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRat
     /* move input FIFO */
     for (k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k+stepSize];
     
+    return f0;
 }
 
 // -----------------------------------------------------------------------------------------------------------------

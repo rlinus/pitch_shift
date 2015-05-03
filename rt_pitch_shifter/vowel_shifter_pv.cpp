@@ -39,7 +39,7 @@ const size_t data_array_length = 60*44100;
 float input_signal[data_array_length];
 float output_signal[data_array_length];
 
-int num_sample_available[data_array_length/frameSize];
+float estimated_pitch[data_array_length/frameSize];
 int sw_latency[data_array_length/frameSize];
 
 const int mov_avg_width = 5;
@@ -102,7 +102,6 @@ void init(void){
     //i_noise_frame = 0;
     
     if(shift_after_voice_onset){
-
         pv_pitch_factor = 1.0;
     } else {
         pv_pitch_factor = pitch_factor;
@@ -183,7 +182,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     
     memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
      
-    smbPitchShift2(pv_pitch_factor, frameSize, 32, sampleRate, ibuffer, output_p);
+    estimated_pitch[i_frame] = smbPitchShift2(pv_pitch_factor, frameSize, 32, sampleRate, ibuffer, output_p,i_frame==0?ref_sound_freq:0);
     memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
     
         
@@ -290,20 +289,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
             mxArray *voice_onset_m = mxCreateDoubleScalar(voice_onset_f);
             
-            mxArray *num_sample_available_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
-            double *num_sample_available_mp = mxGetPr(num_sample_available_m);
+            mxArray *estimated_pitch_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
+            double *estimated_pitch_mp = mxGetPr(estimated_pitch_m);
             mxArray *sw_latency_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
             double *sw_latency_mp = mxGetPr(sw_latency_m);
             
             for(int i = 0; i<i_frame+1; ++i){
-                num_sample_available_mp[i] = (double) num_sample_available[i];
+                estimated_pitch_mp[i] = (double) estimated_pitch[i];
                 sw_latency_mp[i] = (double) sw_latency[i];
             }
 
             if(nlhs >= 1) plhs[0] = input_signal_m;
             if(nlhs >= 2) plhs[1] = output_signal_m;
             if(nlhs >= 3) plhs[2] = voice_onset_m;
-            if(nlhs >= 4) plhs[3] = num_sample_available_m;
+            if(nlhs >= 4) plhs[3] = estimated_pitch_m;
             if(nlhs >= 5) plhs[4] = sw_latency_m;
             
             mexPrintf("Number of processed frames: %i\n",i_frame+1);
