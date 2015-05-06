@@ -7,7 +7,7 @@ function data = vowel_exp_recording_pv
     data.pitch_levels_cents = [-100 0 100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
-    data.num_sessions = 10;
+    data.num_sessions = 5;
     data.shift_duration_ms = 1000;
     data.voc_duration_ms = 2500;
     
