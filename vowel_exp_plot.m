@@ -3,7 +3,7 @@ function data = vowel_exp_plot(data)
     data.ref = 'constant';
     %data.ref = 'time variant';
     data.invalid_sessions = [];
-    data.ref_freq = data.piano_freq;
+    data.ref_freq = 125;%data.piano_freq;
     data.latency_ms=20;
     if data.mode==1
         data.time_after_voice_onset_ms = 2800;
@@ -14,7 +14,7 @@ function data = vowel_exp_plot(data)
         data.time = 0:data.timestep:data.time_after_voice_onset_ms;
     else
         data.time_before_shift_ms = 200;
-        data.time_after_shift_ms = 700;
+        data.time_after_shift_ms = 1300;
         
         data.time_before_shift_ms = round(data.time_before_shift_ms/data.timestep)*data.timestep;
         data.time_after_shift_ms = round(data.time_after_shift_ms/data.timestep)*data.timestep;

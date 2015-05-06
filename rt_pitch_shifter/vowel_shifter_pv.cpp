@@ -10,6 +10,7 @@
 #include "BeeThree.h"
 #include "Drummer.h"
 #include "smbPitchShift.h"
+#include "dywapitchtrack.h"
 
 using namespace std;
 using namespace stk;
@@ -22,6 +23,7 @@ void gen_drum_sound(double f, double amp);
 double draw_var(void);
 void lent_process(float *input, float *output);
 
+
 const int frameSize = 64;
 const int sampleRate = 44100;
 
@@ -30,6 +32,8 @@ const int sampleRate = 44100;
 RtAudio dac;
 
 //PitShift lentshifter = PitShift();
+
+_dywapitchtracker pitchtracker;
 
 float output[frameSize];
 float *output_p = output;
@@ -59,10 +63,10 @@ bool play_ref_sound = true;
 bool ref_sound_always_on = false;
 bool mark_session_starts = true;
 bool mark_session_ends = true;
-int start_marker_duration_f = 350;
+int start_marker_duration_f = 0.5*sampleRate/(double)frameSize;
 int start_marker_onset_f = 30;
-int end_marker_duration_f = 350;
-int ref_sound_duration_f = 350;
+int end_marker_duration_f = 0.5*sampleRate/(double)frameSize;
+int ref_sound_duration_f = 0.5*sampleRate/(double)frameSize;
 
 double ref_sound_freq = 125.0;
 
@@ -84,9 +88,9 @@ float piano_sound[piano_sound_length];
 volatile int is_finished = 0;
 
 bool do_var = false;
-double std_dev = 100.0;
-double delta = 0.2;
-int T_var_f = 4;
+double std_dev = 500.0;
+double delta = 0.01;
+int T_var_f = 1;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
 
@@ -110,7 +114,7 @@ void init(void){
     memset(input_signal,0,sizeof(input_signal));
     memset(output_signal,0,sizeof(output_signal));
           
-    gen_beep_sound(600,0.03);
+    gen_beep_sound(ref_sound_freq,0.03);
     gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
 
@@ -119,6 +123,9 @@ void init(void){
         mov_avg(0.0f);
     }
     
+    dywapitch_inittracking(&pitchtracker);
+    
+    smbPitchShiftInit(frameSize, 2048/frameSize, sampleRate);
 }
 
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -181,9 +188,21 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     }
     
     memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
+    
+    int window_length_factor=16;
+    if(i_frame>=window_length_factor){
+        estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
+    }else{
+        estimated_pitch[i_frame] = 0;
+    }
      
-    estimated_pitch[i_frame] = smbPitchShift2(pv_pitch_factor, frameSize, 32, sampleRate, ibuffer, output_p,i_frame==0?ref_sound_freq:0);
-    memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
+    smbPitchShift(pv_pitch_factor, ibuffer, output);
+    
+    if(i_frame>=window_length_factor*4){
+        memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
+    }
+    
+     //memcpy(&output_signal[i_frame*frameSize],ibuffer,frameSize*sizeof(float));
     
         
     for (int i=0; i<frameSize; i++ ){  
@@ -219,11 +238,15 @@ void start_stream(void)
 	iparameters.deviceId = 0; //dac.getDefaultInputDevice();
 	iparameters.nChannels = 1;
     
+    RtAudio::StreamOptions options;
+    options.flags = RTAUDIO_HOG_DEVICE | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_MINIMIZE_LATENCY;
+    options.priority = 10000000;
+    
     unsigned int bufferFrames = frameSize;
     
     
 	try {
-		dac.openStream( &oparameters, &iparameters, RTAUDIO_FLOAT32, (unsigned int)Stk::sampleRate(), &bufferFrames, &tick, NULL, NULL);
+		dac.openStream( &oparameters, &iparameters, RTAUDIO_FLOAT32, (unsigned int)Stk::sampleRate(), &bufferFrames, &tick, NULL, &options);
 	}
 	catch ( RtAudioError &error ) {
 		error.printMessage();

@@ -77,7 +77,8 @@ function make(varargin)
     elseif strcmpi(varargin{1},'vowel_shifter_pv')
         mex ../vowel_shifter_pv.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include
         mex ../smbPitchShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include
-        mex vowel_shifter_pv.obj smbPitchShift.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj
+        mex ../dywapitchtrack.c -g -c
+        mex vowel_shifter_pv.obj smbPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lfftw3f-3.lib
     else
         fprintf('invalid input\n');
     end

@@ -3,8 +3,8 @@
 
 void smbFft(float *fftBuffer, long fftFrameSize, long sign);
 double smbAtan2(double x, double y);
-void smbPitchShift(float pitchShift, long numSampsToProcess, long fftFrameSize, long osamp, float sampleRate, float *indata, float *outdata);
-float smbPitchShift2(float pitchShift, long stepSize, long osamp, float sampleRate, float *indata, float *outdata, int init_f0);
+void smbPitchShiftInit(long stepSize_i, long osamp_i, float sampleRate_i);
+void smbPitchShift(float pitchShift, float *indata, float *outdata);
 
 
 #endif
