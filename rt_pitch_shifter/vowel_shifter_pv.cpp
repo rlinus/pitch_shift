@@ -87,9 +87,9 @@ float piano_sound[piano_sound_length];
 
 volatile int is_finished = 0;
 
-bool do_var = false;
-double std_dev = 500.0;
-double delta = 0.01;
+bool do_var = true;
+double std_dev = 400.0;
+double delta = 0.001;
 int T_var_f = 1;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);

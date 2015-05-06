@@ -2,12 +2,12 @@ function data = vowel_exp_recording_pv
     data.frameSize = 64;
     data.Fs = 44100;
     
-    data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
+    data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
 
-    data.pitch_levels_cents = [-100 0 100];%[-60 -30 0 30 60];
+    data.pitch_levels_cents = [100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
-    data.num_sessions = 5;
+    data.num_sessions = 1;
     data.shift_duration_ms = 1000;
     data.voc_duration_ms = 2500;
     
