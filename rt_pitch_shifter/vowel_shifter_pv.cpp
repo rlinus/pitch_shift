@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <random>
 #include <string>
+#include <math.h>
 #include "mex.h"
 #include "Stk.h"
 #include "RtAudio.h"
@@ -20,7 +21,7 @@ double mov_avg(double e);
 void gen_beep_sound(double f, double amp);
 void gen_piano_sound(double f, double amp);
 void gen_drum_sound(double f, double amp);
-double draw_var(void);
+double draw_var(bool init = false);
 void lent_process(float *input, float *output);
 
 
@@ -44,7 +45,9 @@ float input_signal[data_array_length];
 float output_signal[data_array_length];
 
 float estimated_pitch[data_array_length/frameSize];
-int sw_latency[data_array_length/frameSize];
+
+float pv_pitch_factor_sqs[data_array_length/frameSize];
+float control_factor_sqs[data_array_length/frameSize];
 
 const int mov_avg_width = 5;
 
@@ -54,6 +57,8 @@ int shift_onset_f;
 int shift_duration_f;
 double pitch_factor;
 float pv_pitch_factor;
+float control_factor;
+
 
 bool shift_after_voice_onset = false;
 
@@ -87,12 +92,18 @@ float piano_sound[piano_sound_length];
 
 volatile int is_finished = 0;
 
-bool do_var = true;
-double std_dev = 400.0;
-double delta = 0.001;
+bool do_var = false;
+double std_dev = 100.0;
+double fc = 0.005; //normalized: 1 corresponds to samplingfreq (must be smaller than 0.5)
 int T_var_f = 1;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
+
+bool do_control = true;
+float kp = 0;
+float ki = 0.1;
+float control_error = 0;
+float control_error_sum = 0;
 
 void init(void){
     Stk::setSampleRate(sampleRate);
@@ -103,6 +114,7 @@ void init(void){
     is_finished = 0;
     voice_onset_f = -1;
     
+    control_error_sum = 0;
     //i_noise_frame = 0;
     
     if(shift_after_voice_onset){
@@ -113,6 +125,8 @@ void init(void){
     
     memset(input_signal,0,sizeof(input_signal));
     memset(output_signal,0,sizeof(output_signal));
+    
+    draw_var(true);
           
     gen_beep_sound(ref_sound_freq,0.03);
     gen_piano_sound(ref_sound_freq, 0.1);
@@ -151,6 +165,15 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     
     double amp = mov_avg(frameAmplitude(ibuffer));
     
+    memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
+    
+    int window_length_factor=16;
+    if(i_frame>=window_length_factor && voice_onset_f != -1){
+        estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
+    }else{
+        estimated_pitch[i_frame] = 0;
+    }
+    
     if(shift_after_voice_onset){
  
         if(!do_var){
@@ -179,6 +202,23 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         }
     }
     
+    if(do_control && voice_onset_f!=-1 && i_frame > voice_onset_f+30){
+        if(estimated_pitch[i_frame]>0){
+            control_error = 1200*log2(estimated_pitch[i_frame]/ref_sound_freq*pitch_factor);
+        } else{
+            control_error = 0;
+        }
+        control_error_sum += control_error*frameSize/(float)sampleRate;
+        float control_factor_cents = kp*control_error+ki*control_error_sum;
+        
+        const float max_control_error = 200;
+        if(control_factor_cents > max_control_error) control_factor_cents = max_control_error;
+        if(control_factor_cents < -1*max_control_error) control_factor_cents = -1*max_control_error;
+        control_factor = pow(2,control_factor_cents/1200);
+    }else{
+        control_factor = 1;
+    }
+    
     if (voice_onset_f == -1 && amp > threshold){
             voice_onset_f = i_frame;
     }
@@ -187,16 +227,10 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         is_finished = 1;
     }
     
-    memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
-    
-    int window_length_factor=16;
-    if(i_frame>=window_length_factor){
-        estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
-    }else{
-        estimated_pitch[i_frame] = 0;
-    }
+    pv_pitch_factor_sqs[i_frame] = pv_pitch_factor;
+    control_factor_sqs[i_frame] = control_factor;
      
-    smbPitchShift(pv_pitch_factor, ibuffer, output);
+    smbPitchShift(pv_pitch_factor*control_factor, ibuffer, output);
     
     if(i_frame>=window_length_factor*4){
         memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
@@ -312,21 +346,25 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
             mxArray *voice_onset_m = mxCreateDoubleScalar(voice_onset_f);
             
+            mxArray *pv_pitch_factor_sqs_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
+            double *pv_pitch_factor_sqs_mp = mxGetPr(pv_pitch_factor_sqs_m);
+            mxArray *control_factor_sqs_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
+            double *control_factor_sqs_mp = mxGetPr(control_factor_sqs_m);
             mxArray *estimated_pitch_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
             double *estimated_pitch_mp = mxGetPr(estimated_pitch_m);
-            mxArray *sw_latency_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
-            double *sw_latency_mp = mxGetPr(sw_latency_m);
             
             for(int i = 0; i<i_frame+1; ++i){
+                pv_pitch_factor_sqs_mp[i] = (double) pv_pitch_factor_sqs[i];
+                control_factor_sqs_mp[i] = (double) control_factor_sqs[i];
                 estimated_pitch_mp[i] = (double) estimated_pitch[i];
-                sw_latency_mp[i] = (double) sw_latency[i];
             }
 
             if(nlhs >= 1) plhs[0] = input_signal_m;
             if(nlhs >= 2) plhs[1] = output_signal_m;
             if(nlhs >= 3) plhs[2] = voice_onset_m;
-            if(nlhs >= 4) plhs[3] = estimated_pitch_m;
-            if(nlhs >= 5) plhs[4] = sw_latency_m;
+            if(nlhs >= 4) plhs[3] = pv_pitch_factor_sqs_m;
+            if(nlhs >= 5) plhs[4] = control_factor_sqs_m;
+            if(nlhs >= 6) plhs[5] = estimated_pitch_m;
             
             mexPrintf("Number of processed frames: %i\n",i_frame+1);
 
@@ -497,13 +535,68 @@ void gen_drum_sound(double f, double amp){
     delete instrument;
 }
 
-double draw_var(void){
-    static double v = 0;
-    v = (1-delta) * v + delta * distribution_pitch_var(generator);
-    //double v = distribution_pitch_var(generator);
-    //if(v > 2*std_var) v=2*std_var;
-    //if(v < -2*std_var) v=-2*std_var;
-    return pow(2.0,v/1200.0);
+// double draw_var(bool init =false){
+//     static double v = 0;
+//     v = (1-delta) * v + delta * distribution_pitch_var(generator);
+//     //double v = distribution_pitch_var(generator);
+//     //if(v > 2*std_var) v=2*std_var;
+//     //if(v < -2*std_var) v=-2*std_var;
+//     return pow(2.0,v/1200.0);
+// }
+
+double draw_var(bool init){
+    //second order butterworth filter (see: http://www.kwon3d.com/theory/filtering/fil.html)
+    
+    static double ym1 = 0;
+    static double ym2 = 0;
+    static double xm1 = 0;
+    static double xm2 = 0;
+    
+    const double pi = 3.14159265358979323846;
+    
+    static double omega;
+    static double c;
+    
+    static double a0;
+    static double a1;
+    static double a2;
+    static double b1;
+    static double b2;
+    
+    if(init){
+        ym1 = 0;
+        ym2 = 0;
+        xm1 = 0;
+        xm2 = 0;
+        
+        omega = tan(pi*fc);
+        c = 1+sqrt(2)*omega+omega*omega;
+
+        a0 = omega*omega/c;
+        a1 = 2*a0;
+        a2 = a0;
+        b1 = 2*(omega*omega-1)/c;
+        b2 = (1-sqrt(2)*omega+omega*omega)/c;
+        
+        return 0;
+    }
+    
+    double x = distribution_pitch_var(generator);
+    
+    if(fc>=0.5){
+        return pow(2.0,x/1200.0);
+    }
+    
+    
+    double y = a0*x+a1*xm1+a2*xm2-b1*ym1-b2*ym2;
+    
+    ym2 = ym1;
+    ym1 = y;
+    xm2 = xm1;
+    xm1 = x;
+    
+    return pow(2.0,y/1200.0);
+    
 }
 
 // void lent_process(float *input, float *output){

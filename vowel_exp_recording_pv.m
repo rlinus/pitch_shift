@@ -4,14 +4,14 @@ function data = vowel_exp_recording_pv
     
     data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
 
-    data.pitch_levels_cents = [100];%[-60 -30 0 30 60];
+    data.pitch_levels_cents = [-100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
     data.num_sessions = 1;
     data.shift_duration_ms = 1000;
     data.voc_duration_ms = 2500;
     
-    data.piano_freq = 120;
+    data.piano_freq = 200;
     data.play_ref_whole_session = 1; %1: no, -1: yes
     
     data.rec_date = datetime('now');
@@ -42,7 +42,7 @@ function data = vowel_exp_recording_pv
         while(vowel_shifter_pv(0) == 0)
             pause(0.2);
         end
-        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),data.detected_pitch{i},data.sw_latency{i}] = vowel_shifter_pv(-1);
+        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),data.pitch_factor_sqs{i}, data.control_factor_sqs{i},data.detected_pitch{i}] = vowel_shifter_pv(-1);
         pause(0.3);
     end
     data.voice_onset_ms = data.voice_onset_f * data.frameSize * 1000 / data.Fs;
