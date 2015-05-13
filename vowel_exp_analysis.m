@@ -1,14 +1,14 @@
 function data = vowel_exp_analysis(data)
     data.sex = 'male';
-    data.max_pitch_change = 0.5; %[Hz/ms]
-    data.frame_length = 2.5*40; %[ms]
-    data.timestep = 10/2; %[ms]
+    data.max_pitch_change = 1; %[Hz/ms]
+    data.frame_length = 200; %[ms]
+    data.timestep = 2; %[ms]
     data.min_duration_of_voiced_regions = 150; %[ms]
 
     if strcmpi(data.sex,'male')
-        data.F0MinMax = [50 250];
-        data.f0_low=100;
-        data.f0_high=150; 
+        data.F0MinMax = [100 300];
+        data.f0_low=150;
+        data.f0_high=250; 
     else
         data.F0MinMax = [300 500];
         data.f0_low=350;
