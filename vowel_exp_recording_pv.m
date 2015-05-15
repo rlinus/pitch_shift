@@ -4,24 +4,24 @@ function data = vowel_exp_recording_pv
     
     data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
 
-    data.pitch_levels_cents = [-100 0 100];%[-60 -30 0 30 60];
+    data.pitch_levels_cents = [100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
-    data.num_sessions = 5;
-    data.shift_duration_ms = 800;
-    data.voc_duration_ms = 2000;
+    data.num_sessions = 1;
+    data.shift_duration_ms = 3*3800;
+    data.voc_duration_ms = 3*2000;
     data.shift_onset_interval_ms = [400 800];
     
-    data.piano_freq = 200;
+    data.piano_freq = 150;
     data.play_ref_whole_session = 1; %1: no, -1: yes
     
-    data.do_var = 0;
+    data.do_var = 1;
     data.std_dev = 100;
-    data.fc = 0.005;
+    data.fc = 0.01;
     
     data.do_control = 0;
     data.kp  = 0;
-    data.ki = 5;
+    data.ki = 2;
     
     data.pause_between_sessions_s = 0.5;
     

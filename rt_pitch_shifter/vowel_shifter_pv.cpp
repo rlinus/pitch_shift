@@ -146,7 +146,7 @@ void init(void){
     
     dywapitch_inittracking(&pitchtracker);
     
-    smbPitchShiftInit(frameSize, 512/frameSize, sampleRate);
+    smbPitchShiftInit(frameSize, 512/2/frameSize, sampleRate);
 }
 
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,

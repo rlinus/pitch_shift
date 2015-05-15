@@ -5,13 +5,13 @@ Amp_thresh=1; % above that sound amplitude no change in shift amount (parameter 
 Amp_thresh_high=5; % new idea: the true threshold is Amp_thresh_high, but Amp_thresh must be passed before
 
 Min_Dur_per_level_s=1; % Pitch shift stays at least Min_Dur_per_level_s seconds at the specified level
-T_s=10; % time in seconds
+T_s=20; % time in seconds
 
 % lev0=2;
 % levs=[1 3];
 
 lev0=3;
-levs=3;[1 2 4 5];
+levs=[1 2 4 5];
 %levs=[1 3];
 
 do_var=1;
