@@ -74,7 +74,7 @@ bool mark_session_ends = false;
 int start_marker_duration_f = 0.5*sampleRate/(double)frameSize;
 int start_marker_onset_f = 30;
 int end_marker_duration_f = 0.5*sampleRate/(double)frameSize;
-int ref_sound_duration_f = 0.5*sampleRate/(double)frameSize;
+int ref_sound_duration_f = 0.8*sampleRate/(double)frameSize;
 
 double ref_sound_freq = 125.0;
 
@@ -232,7 +232,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         control_factor = 1;
     }
     
-    if (voice_onset_f == -1 && amp > threshold){
+    if (voice_onset_f == -1 && amp > threshold && i_frame > ref_sound_duration_f){
             voice_onset_f = i_frame;
     }
     
@@ -565,8 +565,8 @@ void gen_beep_sound(double f, double amp){
 
 void gen_piano_sound(double f, double amp){
       
-    //Instrmnt *instrument = new Rhodey();
-    Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
+    Instrmnt *instrument = new Rhodey();
+    //Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
     //Instrmnt *instrument = new Wurley();
     instrument->noteOn(f, amp);
     
