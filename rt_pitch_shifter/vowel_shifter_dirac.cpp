@@ -10,8 +10,8 @@
 #include "Rhodey.h"
 #include "BeeThree.h"
 #include "Drummer.h"
+#include "Dirac.h"
 #include "dywapitchtrack.h"
-#include "smbPitchShift.h"
 
 using namespace std;
 using namespace stk;
@@ -22,7 +22,7 @@ void gen_beep_sound(double f, double amp);
 void gen_piano_sound(double f, double amp);
 void gen_drum_sound(double f, double amp);
 double draw_var(bool init = false);
-void lent_process(float *input, float *output);
+//void lent_process(float *input, float *output);
 
 
 const int frameSize = 64;
@@ -33,6 +33,8 @@ const int sampleRate = 44100;
 RtAudio dac;
 
 //PitShift lentshifter = PitShift();
+
+void *diracFx = DiracFxCreate(kDiracQualityBetter, sampleRate, 1);
 
 _dywapitchtracker pitchtracker;
 
@@ -84,7 +86,7 @@ const int num_noise_frames = 5000;
 float pink_noise[num_noise_frames*frameSize];
 int i_noise_frame = 0;
 
-const int beep_sound_length = 20*sampleRate;
+const int beep_sound_length = 1*sampleRate;
 float beep_sound[beep_sound_length];
 
 const int drum_sound_length = 1*sampleRate;
@@ -135,7 +137,7 @@ void init(void){
     
     draw_var(true);
           
-    //gen_beep_sound(ref_sound_freq,0.1);
+    gen_beep_sound(ref_sound_freq,0.03);
     gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
 
@@ -145,8 +147,7 @@ void init(void){
     }
     
     dywapitch_inittracking(&pitchtracker);
-    
-    smbPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+
 }
 
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -171,8 +172,6 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     
     
     double amp = mov_avg(frameAmplitude(ibuffer));
-    
-    //ibuffer = &beep_sound[i_frame*frameSize];
     
     memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
     
@@ -244,11 +243,11 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     var_factor_sqs[i_frame] = var_factor;
     control_factor_sqs[i_frame] = control_factor;
      
-    smbPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
     
-    if(i_frame>=window_length_factor*4){
-        memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
-    }
+    long ret = DiracFxProcessFloatInterleaved(1.0, static_factor*var_factor*control_factor, ibuffer, output, frameSize, diracFx);
+    
+    memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
+
     
      //memcpy(&output_signal[i_frame*frameSize],ibuffer,frameSize*sizeof(float));
     
@@ -312,6 +311,7 @@ void start_stream(void)
     int lat_hw = dac.getStreamLatency();
     
     //mexPrintf("HW latency: %i\n",lat_hw);
+    mexPrintf("SW latency: %i\n",DiracFxLatencyFrames(sampleRate));
     
     return;
 }

@@ -68,6 +68,7 @@ float window[MAX_FRAME_LENGTH];
 fftwf_plan pfft;
 fftwf_plan pifft;
 
+
 // -----------------------------------------------------------------------------------------------------------------
 
 
@@ -119,15 +120,14 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
     
     /* do windowing and re,im interleave */
     for (k = 0; k < fftFrameSize;k++) {
-        gFFTworksp_real[k] = gInFIFO[k] * window[k];
+        gFFTworksp_real[k] = window[k]*gInFIFO[k];
 //         gFFTworksp[2*k] = gInFIFO[k] * window[k];
 //         gFFTworksp[2*k+1] = 0.;
-    }
 
+    }
 
     /* ***************** ANALYSIS ******************* */
     /* do transform */
-    //smbFft(gFFTworksp, fftFrameSize, -1);
     fftwf_execute(pfft);
     
     /* this is the analysis step */
@@ -142,7 +142,7 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
         phase = atan2(imag,real);
 
         /* compute phase difference */
-        tmp = phase - gLastPhase[k];
+        tmp = (phase - gLastPhase[k]);
         gLastPhase[k] = phase;
 
         /* subtract expected phase difference */
@@ -165,39 +165,6 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
         gAnaFreq[k] = tmp;
 
     }
-    
-//     //f0 estimate
-//     int f_i_index[MAX_FRAME_LENGTH/2+1];
-//     int i = 0;
-//     bool first = true;
-//     float f = 0;
-// //     for(k = 0; k <= fftFrameSize2; k++) {
-// //         if(gAnaFreq[k] > f+f0 *3/2 && !first){
-// //             f = gAnaFreq[i];
-// //             ++i;
-// //             first = true;
-// //         }
-// //         if(gAnaFreq[k] > f+f0 /2 && gAnaFreq[k] <= f+f0 *3/2) {
-// //             if(first){
-// //                 first =false;
-// //                 f_i_index[i] = k;
-// //             }else if(gAnaMagn[k]>gAnaMagn[k-1]){
-// //                 f_i_index[i] = k;
-// //             }
-// //         }
-// //     }
-//     
-//     float max = 0;
-//     float fl = f0;
-//     for(k = 0; k <= fftFrameSize2; k++) {
-//         if(gAnaFreq[k] > fl /2 && gAnaFreq[k] <= fl *3/2 && gAnaMagn[k]>max) {
-//             max = gAnaMagn[k];
-//             f0 = gAnaFreq[k];
-//         }
-//     }
-    
-    //f0 = gAnaFreq[f_i_index[0]];
-    //f0 = f_i_index[0];
 
     /* ***************** PROCESSING ******************* */
     /* this does the actual pitch shifting */
@@ -244,12 +211,15 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
     //for (k = fftFrameSize+2; k < 2*fftFrameSize; k++) gFFTworksp[k] = 0.;
 
     /* do inverse transform */
-    //smbFft(gFFTworksp, fftFrameSize, 1);
     fftwf_execute(pifft);
+    
+    for(k=0; k < fftFrameSize; k++) {
+        gFFTworksp_real[k] = window[k]*gFFTworksp_real[k]/fftFrameSize/(osamp*3/(double)8);
+    }
 
     /* do windowing and add to output accumulator */ 
     for(k=0; k < fftFrameSize; k++) {
-        gOutputAccum[k] += window[k]*gFFTworksp_real[k]/(fftFrameSize2*osamp);
+        gOutputAccum[k] += gFFTworksp_real[k];
     }
     for (k = 0; k < stepSize; k++) outdata[k] = gOutputAccum[k];
 

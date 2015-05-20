@@ -11,7 +11,7 @@
 #include "BeeThree.h"
 #include "Drummer.h"
 #include "dywapitchtrack.h"
-#include "smbPitchShift.h"
+#include "cpvPitchShift.h"
 
 using namespace std;
 using namespace stk;
@@ -146,7 +146,7 @@ void init(void){
     
     dywapitch_inittracking(&pitchtracker);
     
-    smbPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+    cpvPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
 }
 
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -244,7 +244,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     var_factor_sqs[i_frame] = var_factor;
     control_factor_sqs[i_frame] = control_factor;
      
-    smbPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
+    cpvPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
     
     if(i_frame>=window_length_factor*4){
         memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));

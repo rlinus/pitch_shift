@@ -4,18 +4,18 @@ function data = vowel_exp_recording_pv
     
     data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
 
-    data.pitch_levels_cents = [100];%[-60 -30 0 30 60];
+    data.pitch_levels_cents = [-100];%[-60 -30 0 30 60];
     data.pitch_levels = 2.^(data.pitch_levels_cents/1200);
 
     data.num_sessions = 1;
-    data.shift_duration_ms = 3*3800;
-    data.voc_duration_ms = 3*2000;
+    data.shift_duration_ms = 1000;
+    data.voc_duration_ms = 2500;
     data.shift_onset_interval_ms = [400 800];
     
-    data.piano_freq = 150;
+    data.piano_freq = 400;
     data.play_ref_whole_session = 1; %1: no, -1: yes
     
-    data.do_var = 1;
+    data.do_var = 0;
     data.std_dev = 100;
     data.fc = 0.01;
     
@@ -50,11 +50,11 @@ function data = vowel_exp_recording_pv
 
     for i=1:data.num_sessions
         fprintf('session %i...\n',i);
-        vowel_shifter_pv(data.mode, data.pitch_level_sqs(i), data.voc_duration_f, data.play_ref_whole_session*data.piano_freq, data.shift_onset_f(i), data.shift_duration_f, data.do_var, data.std_dev, data.fc, data.do_control, data.kp, data.ki);
-        while(vowel_shifter_pv(0) == 0)
+        vowel_shifter_cpv(data.mode, data.pitch_level_sqs(i), data.voc_duration_f, data.play_ref_whole_session*data.piano_freq, data.shift_onset_f(i), data.shift_duration_f, data.do_var, data.std_dev, data.fc, data.do_control, data.kp, data.ki);
+        while(vowel_shifter_cpv(0) == 0)
             pause(0.2);
         end
-        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = vowel_shifter_pv(-1);
+        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = vowel_shifter_cpv(-1);
         pause(data.pause_between_sessions_s);
     end
     data.voice_onset_ms = data.voice_onset_f * data.frameSize * 1000 / data.Fs;
