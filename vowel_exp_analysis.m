@@ -1,19 +1,14 @@
 function data = vowel_exp_analysis(data)
-    data.sex = 'male';
     data.max_pitch_change = 1; %[Hz/ms]
-    data.frame_length = 100; %[ms]
-    data.timestep = 10; %[ms]
+    data.frame_length = 1000; %[ms]
+    data.timestep = 5; %[ms]
     data.min_duration_of_voiced_regions = 150; %[ms]
 
-    if strcmpi(data.sex,'male')
-        data.F0MinMax = [100 250];
-        data.f0_low=100;
-        data.f0_high=350; 
-    else
-        data.F0MinMax = [300 500];
-        data.f0_low=350;
-        data.f0_high=450;
-    end
+
+    data.F0MinMax = [50 550];
+    data.f0_low=data.piano_freq-100;
+    data.f0_high=data.piano_freq+100; 
+
     
     for i=1:data.num_sessions
         [data.f0_time_s{i},data.f0_value_s{i}]=shrp(data.y_r{i},data.Fs,data.F0MinMax,data.frame_length,data.timestep);

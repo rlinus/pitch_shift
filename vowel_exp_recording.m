@@ -1,10 +1,10 @@
 function data = vowel_exp_recording
-    data.subject = 'Linus';
-    data.piano_freq = 250;
+    data.subject = 'Alessandro';
+    data.piano_freq = 150;
     save_data = true;
     dir = 'E:\Data\Linus\MATLAB\rec_vowel_exp_data\';
     
-    data.condition = 1;
+    data.condition = 5;
     
     switch data.condition
         case 1
@@ -13,7 +13,9 @@ function data = vowel_exp_recording
             data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = 0;
             data.num_sessions = 1;
-            data.voc_duration_ms = 3000;
+            data.shift_duration_ms = 0;
+            data.voc_duration_ms = 2500;
+            data.shift_onset_interval_ms = [500 500];
             
             data.do_var = 0;
             data.std_dev = 0;
@@ -46,7 +48,7 @@ function data = vowel_exp_recording
             data.pause_between_sessions_s = 0.7;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
         case 3
-            data.condition_name = 'const_shift';
+            data.condition_name = 'var_shift';
             
             data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = [-100  0 100];
@@ -70,7 +72,7 @@ function data = vowel_exp_recording
             
             data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = 0;
-            data.num_sessions = 15;
+            data.num_sessions = 10;
             data.shift_duration_ms = 0;
             data.voc_duration_ms = 5000;
             data.shift_onset_interval_ms = [4000 4000];
@@ -83,14 +85,14 @@ function data = vowel_exp_recording
             data.kp  = 0;
             data.ki = 0;
             
-            data.pause_between_sessions_s = 0.7;  
+            data.pause_between_sessions_s = 1.0;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
         case 5
             data.condition_name = 'control';
             
             data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = 0;
-            data.num_sessions = 15;
+            data.num_sessions = 10;
             data.shift_duration_ms = 0;
             data.voc_duration_ms = 5000;
             data.shift_onset_interval_ms = [4000 4000];
@@ -103,7 +105,7 @@ function data = vowel_exp_recording
             data.kp  = 0;
             data.ki = 2.5;
             
-            data.pause_between_sessions_s = 0.7;  
+            data.pause_between_sessions_s = 1.0;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
         otherwise
             fprinf('condition doesn'' exist!\n');

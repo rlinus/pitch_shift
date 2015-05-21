@@ -358,7 +358,7 @@ float _dywapitch_dynamicprocess(dywapitchtracker *pitchtracker, float pitch) {
 	//
 	float estimatedPitch = -1;
 	float acceptedError = 0.2f;
-	int maxConfidence = 5;
+	int maxConfidence = 10;
 	
 	if (pitch != -1) {
 		// I have a pitch here
