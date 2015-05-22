@@ -46,33 +46,33 @@
 #define MAX_FRAME_LENGTH 8192
 
 
-float gInFIFO[MAX_FRAME_LENGTH];
-float gFFTworksp[2*MAX_FRAME_LENGTH];
-float gFFTworksp_real[MAX_FRAME_LENGTH];
-float gLastPhase[MAX_FRAME_LENGTH/2+1];
-float gSumPhase[MAX_FRAME_LENGTH/2+1];
-float gOutputAccum[2*MAX_FRAME_LENGTH];
-float gAnaFreq[MAX_FRAME_LENGTH];
-float gAnaMagn[MAX_FRAME_LENGTH];
-float gSynFreq[MAX_FRAME_LENGTH];
-float gSynMagn[MAX_FRAME_LENGTH];
+double gInFIFO[MAX_FRAME_LENGTH];
+double gFFTworksp[2*MAX_FRAME_LENGTH];
+double gFFTworksp_real[MAX_FRAME_LENGTH];
+double gLastPhase[MAX_FRAME_LENGTH/2+1];
+double gSumPhase[MAX_FRAME_LENGTH/2+1];
+double gOutputAccum[2*MAX_FRAME_LENGTH];
+double gAnaFreq[MAX_FRAME_LENGTH];
+double gAnaMagn[MAX_FRAME_LENGTH];
+double gSynFreq[MAX_FRAME_LENGTH];
+double gSynMagn[MAX_FRAME_LENGTH];
 
 double freqPerBin, expct;
 long inFifoLatency, fftFrameSize2;
 
 long stepSize;
 long osamp;
-float sampleRate;
+double sampleRate;
 long fftFrameSize;
-float window[MAX_FRAME_LENGTH];
-fftwf_plan pfft;
-fftwf_plan pifft;
+double window[MAX_FRAME_LENGTH];
+fftw_plan pfft;
+fftw_plan pifft;
 
 
 // -----------------------------------------------------------------------------------------------------------------
 
 
-void smbPitchShiftInit(long stepSize_i, long osamp_i, float sampleRate_i){
+void smbPitchShiftInit(long stepSize_i, long osamp_i, double sampleRate_i){
     stepSize = stepSize_i;
     osamp = osamp_i;
     sampleRate = sampleRate_i;
@@ -83,28 +83,28 @@ void smbPitchShiftInit(long stepSize_i, long osamp_i, float sampleRate_i){
 	expct = 2.*M_PI*(double)stepSize/(double)fftFrameSize;
 	inFifoLatency = fftFrameSize-stepSize;
     
-    memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
-    memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
-    memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
-    memset(gSumPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
-    memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
-    memset(gAnaFreq, 0, MAX_FRAME_LENGTH*sizeof(float));
-    memset(gAnaMagn, 0, MAX_FRAME_LENGTH*sizeof(float));
+    memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(double));
+    memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(double));
+    memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(double));
+    memset(gSumPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(double));
+    memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(double));
+    memset(gAnaFreq, 0, MAX_FRAME_LENGTH*sizeof(double));
+    memset(gAnaMagn, 0, MAX_FRAME_LENGTH*sizeof(double));
 
     for(int k = 0; k < fftFrameSize;++k){
         window[k] = -.5*cos(2.*M_PI*(double)k/(double)fftFrameSize)+.5;
     }
 
-    //fftwf_destroy_plan(pfft);
-    //fftwf_destroy_plan(pfft);
-    //pfft = fftwf_plan_dft_1d(fftFrameSize, (fftwf_complex *)gFFTworksp, (fftwf_complex *)gFFTworksp, FFTW_FORWARD, FFTW_ESTIMATE);
-    //pifft = fftwf_plan_dft_1d(fftFrameSize, (fftwf_complex *)gFFTworksp, (fftwf_complex *)gFFTworksp, FFTW_BACKWARD, FFTW_ESTIMATE);
+    //fftw_destroy_plan(pfft);
+    //fftw_destroy_plan(pfft);
+    //pfft = fftw_plan_dft_1d(fftFrameSize, (fftw_complex *)gFFTworksp, (fftwf_complex *)gFFTworksp, FFTW_FORWARD, FFTW_ESTIMATE);
+    //pifft = fftw_plan_dft_1d(fftFrameSize, (fftw_complex *)gFFTworksp, (fftwf_complex *)gFFTworksp, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-    pfft = fftwf_plan_dft_r2c_1d(fftFrameSize, gFFTworksp_real, (fftwf_complex *)gFFTworksp,FFTW_MEASURE);
-    pifft = fftwf_plan_dft_c2r_1d(fftFrameSize, (fftwf_complex *)gFFTworksp, gFFTworksp_real,FFTW_MEASURE);
+    pfft = fftw_plan_dft_r2c_1d(fftFrameSize, gFFTworksp_real, (fftw_complex *)gFFTworksp,FFTW_MEASURE);
+    pifft = fftw_plan_dft_c2r_1d(fftFrameSize, (fftw_complex *)gFFTworksp, gFFTworksp_real,FFTW_MEASURE);
 }
 
-void smbPitchShift(float pitchShift, float *indata, float *outdata)
+void smbPitchShift(double pitchShift, double *indata, double *outdata)
 /*
 	Routine smbPitchShift(). See top of file for explanation
 	Purpose: doing pitch shifting while maintaining duration using the Short
@@ -116,7 +116,7 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
     double magn, phase, tmp, real, imag;
     long k, qpd, index;
     
-    memcpy(&gInFIFO[inFifoLatency], indata, (size_t) stepSize*sizeof(float));
+    memcpy(&gInFIFO[inFifoLatency], indata, (size_t) stepSize*sizeof(double));
     
     /* do windowing and re,im interleave */
     for (k = 0; k < fftFrameSize;k++) {
@@ -128,7 +128,7 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
 
     /* ***************** ANALYSIS ******************* */
     /* do transform */
-    fftwf_execute(pfft);
+    fftw_execute(pfft);
     
     /* this is the analysis step */
     for (k = 0; k <= fftFrameSize2; k++) {
@@ -168,8 +168,8 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
 
     /* ***************** PROCESSING ******************* */
     /* this does the actual pitch shifting */
-    memset(gSynMagn, 0, fftFrameSize*sizeof(float));
-    memset(gSynFreq, 0, fftFrameSize*sizeof(float));
+    memset(gSynMagn, 0, fftFrameSize*sizeof(double));
+    memset(gSynFreq, 0, fftFrameSize*sizeof(double));
     for (k = 0; k <= fftFrameSize2; k++) { 
         index = k*pitchShift;
         if (index <= fftFrameSize2) { 
@@ -211,7 +211,7 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
     //for (k = fftFrameSize+2; k < 2*fftFrameSize; k++) gFFTworksp[k] = 0.;
 
     /* do inverse transform */
-    fftwf_execute(pifft);
+    fftw_execute(pifft);
     
     for(k=0; k < fftFrameSize; k++) {
         gFFTworksp_real[k] = window[k]*gFFTworksp_real[k]/fftFrameSize/(osamp*3/(double)8);
@@ -224,7 +224,7 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
     for (k = 0; k < stepSize; k++) outdata[k] = gOutputAccum[k];
 
     /* shift accumulator */
-    memmove(gOutputAccum, gOutputAccum+stepSize, fftFrameSize*sizeof(float));
+    memmove(gOutputAccum, gOutputAccum+stepSize, fftFrameSize*sizeof(double));
 
     /* move input FIFO */
     for (k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k+stepSize];
@@ -235,7 +235,7 @@ void smbPitchShift(float pitchShift, float *indata, float *outdata)
 // -----------------------------------------------------------------------------------------------------------------
 
 
-void smbFft(float *fftBuffer, long fftFrameSize, long sign)
+void smbFft(double *fftBuffer, long fftFrameSize, long sign)
 /* 
 	FFT routine, (C)1996 S.M.Bernsee. Sign = -1 is FFT, 1 is iFFT (inverse)
 	Fills fftBuffer[0...2*fftFrameSize-1] with the Fourier transform of the
@@ -248,8 +248,8 @@ void smbFft(float *fftBuffer, long fftFrameSize, long sign)
 	of the frequencies of interest is in fftBuffer[0...fftFrameSize].
 */
 {
-	float wr, wi, arg, *p1, *p2, temp;
-	float tr, ti, ur, ui, *p1r, *p1i, *p2r, *p2i;
+	double wr, wi, arg, *p1, *p2, temp;
+	double tr, ti, ur, ui, *p1r, *p1i, *p2r, *p2i;
 	long i, bitm, j, le, le2, k;
 
 	for (i = 2; i < 2*fftFrameSize-2; i += 2) {

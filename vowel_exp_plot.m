@@ -1,27 +1,21 @@
 function data = vowel_exp_plot(data)
-
     data.ref = 'constant';
     %data.ref = 'time variant';
     data.invalid_sessions = [];
     data.ref_freq = data.piano_freq;
     data.latency_ms=20;
-    if data.mode==1
-        data.time_after_voice_onset_ms = 2800;
-        
-        data.time_after_voice_onset_ms = round(data.time_after_voice_onset_ms/data.timestep)*data.timestep;
-        before = 0;
-        after = data.time_after_voice_onset_ms/data.timestep;
-        data.time = 0:data.timestep:data.time_after_voice_onset_ms;
-    else
-        data.time_before_shift_ms = 400;
-        data.time_after_shift_ms = 1400;
-        
-        data.time_before_shift_ms = round(data.time_before_shift_ms/data.timestep)*data.timestep;
-        data.time_after_shift_ms = round(data.time_after_shift_ms/data.timestep)*data.timestep;
-        before = data.time_before_shift_ms/data.timestep;
-        after =  data.time_after_shift_ms/data.timestep;
-        data.time = -data.time_before_shift_ms:data.timestep:data.time_after_shift_ms;
-    end
+    
+    data.time_before_shift_ms = 400;
+    data.time_after_shift_ms = 1400;
+    
+    if data.mode==1, data.time_before_shift_ms=0; end;
+
+    data.time_before_shift_ms = round(data.time_before_shift_ms/data.timestep)*data.timestep;
+    data.time_after_shift_ms = round(data.time_after_shift_ms/data.timestep)*data.timestep;
+    before = data.time_before_shift_ms/data.timestep;
+    after =  data.time_after_shift_ms/data.timestep;
+    data.time = -data.time_before_shift_ms:data.timestep:data.time_after_shift_ms;
+    
     
     for i=1:data.num_sessions
         if(data.mode==1) %shift before voice onset
@@ -80,7 +74,7 @@ function data = vowel_exp_plot(data)
         
         
         cla(p1);
-        ylim(p1,[0.9*data.ref_freq 1.1*data.ref_freq]);
+        ylim(p1,[data.f0_low data.f0_high]);
         xlim(p1,[0, data.f0_time_s{i}(end)]);
         
         plot(p1,p1.XLim,[data.ref_freq,data.ref_freq],'k','LineStyle', '--');

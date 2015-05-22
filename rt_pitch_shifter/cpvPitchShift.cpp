@@ -10,31 +10,31 @@
 #define MAX_FRAME_LENGTH 8192
 
 
-float gInFIFO[MAX_FRAME_LENGTH];
-float gFFTworksp[4*MAX_FRAME_LENGTH];
-float gFFTworksp_real[2*MAX_FRAME_LENGTH];
-float interpOutput[2*MAX_FRAME_LENGTH];
-float gLastPhase[MAX_FRAME_LENGTH/2+1];
-float sphase[MAX_FRAME_LENGTH/2+1];
-float gOutputAccum[4*MAX_FRAME_LENGTH];
+double gInFIFO[MAX_FRAME_LENGTH];
+double gFFTworksp[4*MAX_FRAME_LENGTH];
+double gFFTworksp_real[2*MAX_FRAME_LENGTH];
+double interpOutput[2*MAX_FRAME_LENGTH];
+double gLastPhase[MAX_FRAME_LENGTH/2+1];
+double sphase[MAX_FRAME_LENGTH/2+1];
+double gOutputAccum[4*MAX_FRAME_LENGTH];
 
 double freqPerBin, expct;
 long inFifoLatency, fftFrameSize2;
 
 long stepSize;
 long osamp;
-float sampleRate;
+double sampleRate;
 long fftFrameSize;
-float window[MAX_FRAME_LENGTH];
-fftwf_plan pfft;
-fftwf_plan pifft;
+double window[MAX_FRAME_LENGTH];
+fftw_plan pfft;
+fftw_plan pifft;
 
 bool firsttime = false;
 
 // -----------------------------------------------------------------------------------------------------------------
 void interpft(int ny);
 
-void cpvPitchShiftInit(long stepSize_i, long osamp_i, float sampleRate_i){
+void cpvPitchShiftInit(long stepSize_i, long osamp_i, double sampleRate_i){
     firsttime = true;
     
     stepSize = stepSize_i;
@@ -47,26 +47,26 @@ void cpvPitchShiftInit(long stepSize_i, long osamp_i, float sampleRate_i){
 	expct = 2.*M_PI*(double)stepSize/(double)fftFrameSize;
 	inFifoLatency = fftFrameSize-stepSize;
     
-    memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(float));
-    memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
-    memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
-    memset(sphase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(float));
-    memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(float));
+    memset(gInFIFO, 0, MAX_FRAME_LENGTH*sizeof(double));
+    memset(gFFTworksp, 0, 2*MAX_FRAME_LENGTH*sizeof(double));
+    memset(gLastPhase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(double));
+    memset(sphase, 0, (MAX_FRAME_LENGTH/2+1)*sizeof(double));
+    memset(gOutputAccum, 0, 2*MAX_FRAME_LENGTH*sizeof(double));
 
     for(int k = 0; k < fftFrameSize;++k){
         window[k] = -.5*cos(2.*M_PI*(double)k/(double)fftFrameSize)+.5;
     }
 
-    //fftwf_destroy_plan(pfft);
-    //fftwf_destroy_plan(pfft);
-    //pfft = fftwf_plan_dft_1d(fftFrameSize, (fftwf_complex *)gFFTworksp, (fftwf_complex *)gFFTworksp, FFTW_FORWARD, FFTW_ESTIMATE);
-    //pifft = fftwf_plan_dft_1d(fftFrameSize, (fftwf_complex *)gFFTworksp, (fftwf_complex *)gFFTworksp, FFTW_BACKWARD, FFTW_ESTIMATE);
+    //fftw_destroy_plan(pfft);
+    //fftw_destroy_plan(pfft);
+    //pfft = fftw_plan_dft_1d(fftFrameSize, (fftw_complex *)gFFTworksp, (fftw_complex *)gFFTworksp, FFTW_FORWARD, FFTW_ESTIMATE);
+    //pifft = fftw_plan_dft_1d(fftFrameSize, (fftw_complex *)gFFTworksp, (fftw_complex *)gFFTworksp, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-    pfft = fftwf_plan_dft_r2c_1d(fftFrameSize, gFFTworksp_real, (fftwf_complex *)gFFTworksp,FFTW_MEASURE);
-    pifft = fftwf_plan_dft_c2r_1d(fftFrameSize, (fftwf_complex *)gFFTworksp, gFFTworksp_real,FFTW_MEASURE);
+    pfft = fftw_plan_dft_r2c_1d(fftFrameSize, gFFTworksp_real, (fftw_complex *)gFFTworksp,FFTW_MEASURE);
+    pifft = fftw_plan_dft_c2r_1d(fftFrameSize, (fftw_complex *)gFFTworksp, gFFTworksp_real,FFTW_MEASURE);
 }
 
-void cpvPitchShift(float pitchShift, float *indata, float *outdata)
+void cpvPitchShift(double pitchShift, double *indata, double *outdata)
 {
     double magn, phase, tmp, real, imag;
     long k, qpd, index;
@@ -78,7 +78,7 @@ void cpvPitchShift(float pitchShift, float *indata, float *outdata)
     double Hopratio = fftFrameSize/(double)ifftFrameSize;
 
     
-    memcpy(&gInFIFO[inFifoLatency], indata, (size_t) stepSize*sizeof(float));
+    memcpy(&gInFIFO[inFifoLatency], indata, (size_t) stepSize*sizeof(double));
     
     /* do windowing and re,im interleave */
     for (k = 0; k < fftFrameSize;k++) {
@@ -87,7 +87,7 @@ void cpvPitchShift(float pitchShift, float *indata, float *outdata)
 
     /* ***************** ANALYSIS ******************* */
     /* do transform */
-    fftwf_execute(pfft);
+    fftw_execute(pfft);
     
     /* this is the analysis step */
     for (k = 0; k <= fftFrameSize2; k++) {
@@ -130,7 +130,7 @@ void cpvPitchShift(float pitchShift, float *indata, float *outdata)
     }
     
     /* do inverse transform */
-    fftwf_execute(pifft);
+    fftw_execute(pifft);
     
     for(k=0; k < fftFrameSize; k++) {
         gFFTworksp_real[k] = window[k]*gFFTworksp_real[k]/fftFrameSize/(osamp*3/(double)8);
@@ -158,8 +158,8 @@ void cpvPitchShift(float pitchShift, float *indata, float *outdata)
     for (k = 0; k < stepSize; k++) outdata[k] = gOutputAccum[k];
 
     /* shift accumulator */
-    memmove(gOutputAccum, gOutputAccum+stepSize, (2*fftFrameSize-stepSize)*sizeof(float));
-    memset(&gOutputAccum[2*fftFrameSize-stepSize-1], 0, stepSize*sizeof(float));
+    memmove(gOutputAccum, gOutputAccum+stepSize, (2*fftFrameSize-stepSize)*sizeof(double));
+    memset(&gOutputAccum[2*fftFrameSize-stepSize-1], 0, stepSize*sizeof(double));
 
     /* move input FIFO */
     for (k = 0; k < inFifoLatency; k++) gInFIFO[k] = gInFIFO[k+stepSize];
@@ -181,13 +181,13 @@ void interpft(int ny){
         ny = incr*ny;
     }
     
-    fftwf_plan inpifft = fftwf_plan_dft_c2r_1d(ny, (fftwf_complex *)gFFTworksp, gFFTworksp_real,FFTW_ESTIMATE);
+    fftw_plan inpifft = fftw_plan_dft_c2r_1d(ny, (fftw_complex *)gFFTworksp, gFFTworksp_real,FFTW_ESTIMATE);
     
     int nyqst = (m+1)/2+((m+1) % 2 != 0);
-    fftwf_execute(pfft);
+    fftw_execute(pfft);
     
-    memmove(&gFFTworksp[2*(nyqst+ny-m)], &gFFTworksp[2*nyqst], (m-nyqst)*2*sizeof(float));
-    memset(&gFFTworksp[2*nyqst], 0, (ny-m)*2*sizeof(float));
+    memmove(&gFFTworksp[2*(nyqst+ny-m)], &gFFTworksp[2*nyqst], (m-nyqst)*2*sizeof(double));
+    memset(&gFFTworksp[2*nyqst], 0, (ny-m)*2*sizeof(double));
     
     if(m%2==0){
         gFFTworksp[2*(nyqst-1)] /= 2;
@@ -196,9 +196,9 @@ void interpft(int ny){
         gFFTworksp[2*(nyqst+ny-m-1)+1] = gFFTworksp[2*(nyqst-1)+1];
     }
     
-    fftwf_execute(inpifft);
+    fftw_execute(inpifft);
     
-    float norm = (double)ny/(m*sqrt((double)m*ny));
+    double norm = (double)ny/(m*sqrt((double)m*ny));
     
     for(int i=0;i<ny;++i){
         interpOutput[i] = gFFTworksp_real[i*incr]*norm;

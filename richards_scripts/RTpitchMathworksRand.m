@@ -1,8 +1,8 @@
 %% Pitch shift ramdonly changes to up or down every even epoch (defined by pauses). On odd trials the pitch is zero
 
 % Parameters
-Amp_thresh=25;%1; % above that sound amplitude no change in shift amount (parameter changes only during pauses)
-Amp_thresh_high=40;%5; % new idea: the true threshold is Amp_thresh_high, but Amp_thresh must be passed before
+Amp_thresh=1; % above that sound amplitude no change in shift amount (parameter changes only during pauses)
+Amp_thresh_high=5; % new idea: the true threshold is Amp_thresh_high, but Amp_thresh must be passed before
 
 Min_Dur_per_level_s=1; % Pitch shift stays at least Min_Dur_per_level_s seconds at the specified level
 T_s=20; % time in seconds
@@ -11,10 +11,10 @@ T_s=20; % time in seconds
 % levs=[1 3];
 
 lev0=3;
-levs=[1 2 4 5];
+levs=1;%[1 2 4 5];
 %levs=[1 3];
 
-do_var=0;
+do_var=1;
 std_lev=20;
 varprob=1;
 

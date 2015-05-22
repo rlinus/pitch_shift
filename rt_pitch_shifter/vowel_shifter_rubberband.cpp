@@ -2,28 +2,28 @@
 #include <stdlib.h>
 #include <random>
 #include <string>
-#include <math.h>
 #include "mex.h"
 #include "Stk.h"
 #include "RtAudio.h"
+#include "RubberBandStretcher.h"
 #include "Wurley.h"
 #include "Rhodey.h"
 #include "BeeThree.h"
 #include "Drummer.h"
-#include "dywapitchtrack.h"
-#include "cpvPitchShift.h"
+//#include "PitShift.h"
+//#include "LentPitShift.h"
 
 using namespace std;
 using namespace stk;
+using namespace RubberBand;
 
 double frameAmplitude(float *samples);
 double mov_avg(double e);
 void gen_beep_sound(double f, double amp);
 void gen_piano_sound(double f, double amp);
 void gen_drum_sound(double f, double amp);
-double draw_var(bool init = false);
+double draw_var(void);
 void lent_process(float *input, float *output);
-
 
 const int frameSize = 64;
 const int sampleRate = 44100;
@@ -32,9 +32,16 @@ const int sampleRate = 44100;
 
 RtAudio dac;
 
-//PitShift lentshifter = PitShift();
+RubberBandStretcher::Options options =  RubberBandStretcher::OptionProcessRealTime |
+                                        RubberBandStretcher::OptionFormantPreserved |
+                                        RubberBandStretcher::OptionWindowShort |
+                                        //RubberBandStretcher::OptionSmoothingOn |
+                                        //RubberBandStretcher::OptionPhaseIndependent |
+                                        RubberBandStretcher::OptionTransientsSmooth |
+                                        RubberBandStretcher::OptionPitchHighQuality;//Consistency;
+RubberBandStretcher shifter(sampleRate,1,options,1.0,1.0);
 
-_dywapitchtracker pitchtracker;
+//PitShift lentshifter = PitShift();
 
 float output[frameSize];
 float *output_p = output;
@@ -44,24 +51,16 @@ const size_t data_array_length = 60*44100;
 float input_signal[data_array_length];
 float output_signal[data_array_length];
 
-float estimated_pitch[data_array_length/frameSize];
+int num_sample_available[data_array_length/frameSize];
+int sw_latency[data_array_length/frameSize];
 
-float static_factor_sqs[data_array_length/frameSize];
-float var_factor_sqs[data_array_length/frameSize];
-float control_factor_sqs[data_array_length/frameSize];
+const int mov_avg_width = 5;
 
-const int mov_avg_width = 10;
-
-const double threshold = 0.03f;
+const double threshold = 0.02f;
 int voice_onset_f;
 int shift_onset_f;
 int shift_duration_f;
 double pitch_factor;
-
-float control_factor;
-float var_factor;
-float static_factor;
-
 
 bool shift_after_voice_onset = false;
 
@@ -70,11 +69,11 @@ int voc_duration_f = 1380;
 bool play_ref_sound = true;
 bool ref_sound_always_on = false;
 bool mark_session_starts = true;
-bool mark_session_ends = false;
-int start_marker_duration_f = 0.5*sampleRate/(double)frameSize;
+bool mark_session_ends = true;
+int start_marker_duration_f = 350;
 int start_marker_onset_f = 30;
-int end_marker_duration_f = 0.5*sampleRate/(double)frameSize;
-int ref_sound_duration_f = 0.8*sampleRate/(double)frameSize;
+int end_marker_duration_f = 350;
+int ref_sound_duration_f = 350;
 
 double ref_sound_freq = 125.0;
 
@@ -84,7 +83,7 @@ const int num_noise_frames = 5000;
 float pink_noise[num_noise_frames*frameSize];
 int i_noise_frame = 0;
 
-const int beep_sound_length = 20*sampleRate;
+const int beep_sound_length = 1*sampleRate;
 float beep_sound[beep_sound_length];
 
 const int drum_sound_length = 1*sampleRate;
@@ -95,20 +94,12 @@ float piano_sound[piano_sound_length];
 
 volatile int is_finished = 0;
 
-bool do_var = true;
-double std_dev = 200.0;
-double fc = 0.005; //normalized: 1 corresponds to samplingfreq (must be smaller than 0.5)
-int T_var_f = 1;
+bool do_var = false;
+double std_dev = 50.0;
+double delta = 1;
+int T_var_f = 64;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
-
-bool do_control = false;
-float kp = 0;
-float ki = 0.5;
-int control_delay_f = 0.1*sampleRate/(double)frameSize;
-
-float control_error = 0;
-float control_error_sum = 0;
 
 void init(void){
     Stk::setSampleRate(sampleRate);
@@ -119,23 +110,21 @@ void init(void){
     is_finished = 0;
     voice_onset_f = -1;
     
-    control_error_sum = 0;
     //i_noise_frame = 0;
     
+    shifter.reset();
     if(shift_after_voice_onset){
-        static_factor = 1.0;
+        shifter.setPitchScale(1.0);
+        //lentshifter.setShift(1.0);
     } else {
-        static_factor = pitch_factor;
+        shifter.setPitchScale(pitch_factor);
+        //lentshifter.setShift(pitch_factor);
     }
-    var_factor = 1;
-    control_factor =1;
     
     memset(input_signal,0,sizeof(input_signal));
     memset(output_signal,0,sizeof(output_signal));
-    
-    draw_var(true);
           
-    //gen_beep_sound(ref_sound_freq,0.1);
+    gen_beep_sound(600,0.03);
     gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
 
@@ -144,9 +133,6 @@ void init(void){
         mov_avg(0.0f);
     }
     
-    dywapitch_inittracking(&pitchtracker);
-    
-    cpvPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
 }
 
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
@@ -172,85 +158,64 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     
     double amp = mov_avg(frameAmplitude(ibuffer));
     
-    //ibuffer = &beep_sound[i_frame*frameSize];
-    
-    memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
-    
-    int window_length_factor=16;
-    if(i_frame>=window_length_factor){
-        estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
-    }else{
-        estimated_pitch[i_frame] = 0;
-    }
-    
     if(shift_after_voice_onset){
  
         if(!do_var){
             if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f){
-                static_factor = pitch_factor;
-                var_factor = 1.0;
+                shifter.setPitchScale(pitch_factor);
+                //lentshifter.setShift(pitch_factor);
+                //mexPrintf("pitch: %f,frame: %i\n",amp, i_frame);
             } 
         }else{
             static int i_frame_start;
             if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f){
                 i_frame_start = i_frame;
-                static_factor = pitch_factor;
             }
             if(voice_onset_f > -1 && i_frame - voice_onset_f >= shift_onset_f && i_frame - voice_onset_f < shift_onset_f + shift_duration_f){
                 if((i_frame-i_frame_start)%T_var_f == 0){
-                    var_factor = draw_var();
+                    shifter.setPitchScale(pitch_factor*draw_var());
+                    //lentshifter.setShift(pitch_factor*draw_var());
                 }
             }
             
         }
         
         if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f + shift_duration_f){
-                static_factor = 1.0;
-                var_factor = 1.0;
+                shifter.setPitchScale(1.0);
+                //lentshifter.setShift(1.0);
+                //mexPrintf("pitch: %f,frame: %i\n",amp, i_frame);
         }
     }else if(do_var){
         if(i_frame%T_var_f == 0){
-            static_factor = pitch_factor;
-            var_factor = draw_var();
+            shifter.setPitchScale(pitch_factor*draw_var());
+            //lentshifter.setShift(pitch_factor*draw_var());
         }
     }
     
-    if(do_control && voice_onset_f!=-1 && i_frame > voice_onset_f+control_delay_f && (!shift_after_voice_onset || i_frame - voice_onset_f < shift_onset_f + shift_duration_f)){
-        if(estimated_pitch[i_frame]>0){
-            control_error = 1200*log2(estimated_pitch[i_frame]/ref_sound_freq*static_factor);
-        } else{
-            control_error = 0;
-        }
-        control_error_sum += control_error*frameSize/(float)sampleRate;
-        float control_factor_cents = kp*control_error+ki*control_error_sum;
-        
-        const float max_control_error = 200;
-        if(control_factor_cents > max_control_error) control_factor_cents = max_control_error;
-        if(control_factor_cents < -1*max_control_error) control_factor_cents = -1*max_control_error;
-        control_factor = pow(2,control_factor_cents/1200);
-    }else{
-        control_factor = 1;
-    }
-    
-    if (voice_onset_f == -1 && amp > threshold && i_frame > ref_sound_duration_f){
+    if (voice_onset_f == -1 && amp > threshold){
             voice_onset_f = i_frame;
     }
     
-    if(voice_onset_f > -1 && i_frame == voice_onset_f+voc_duration_f+end_marker_duration_f*mark_session_ends){
+    if(voice_onset_f > -1 && i_frame == voice_onset_f+voc_duration_f+end_marker_duration_f){
         is_finished = 1;
     }
     
-    static_factor_sqs[i_frame] = static_factor;
-    var_factor_sqs[i_frame] = var_factor;
-    control_factor_sqs[i_frame] = control_factor;
+    memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
      
-    cpvPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
+    shifter.process(&ibuffer, nBufferFrames,0);
     
-    if(i_frame>=window_length_factor*4){
+    int r = shifter.available();
+    num_sample_available[i_frame] = r;
+    sw_latency[i_frame] = shifter.getLatency();
+    
+    //the latency of the shifter is 993 samples for pitch_factor = 1.0 (measured). I add two frames latency, to get consitency after shifts, therefore the software latency is 993+2*64=1121 samples
+    if(r>=frameSize && i_frame+1>=18){
+        shifter.retrieve(&output_p, frameSize);
         memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
     }
     
-     //memcpy(&output_signal[i_frame*frameSize],ibuffer,frameSize*sizeof(float));
+//     lent_process(ibuffer,output_p);
+//     memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(float));
     
         
     for (int i=0; i<frameSize; i++ ){  
@@ -286,15 +251,13 @@ void start_stream(void)
 	iparameters.deviceId = 0; //dac.getDefaultInputDevice();
 	iparameters.nChannels = 1;
     
-    RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_HOG_DEVICE | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_MINIMIZE_LATENCY;
-    options.priority = 10000000;
-    
     unsigned int bufferFrames = frameSize;
     
     
+    shifter.setMaxProcessSize(bufferFrames);
+    
 	try {
-		dac.openStream( &oparameters, &iparameters, RTAUDIO_FLOAT32, (unsigned int)Stk::sampleRate(), &bufferFrames, &tick, NULL, &options);
+		dac.openStream( &oparameters, &iparameters, RTAUDIO_FLOAT32, (unsigned int)Stk::sampleRate(), &bufferFrames, &tick, NULL, NULL);
 	}
 	catch ( RtAudioError &error ) {
 		error.printMessage();
@@ -310,8 +273,10 @@ void start_stream(void)
 	}
     
     int lat_hw = dac.getStreamLatency();
+    int lat_sw = shifter.getLatency();
     
-    //mexPrintf("HW latency: %i\n",lat_hw);
+    mexPrintf("HW latency: %i, SW latency: %i\n",lat_hw,lat_sw);
+    
     
     return;
 }
@@ -359,31 +324,23 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
             mxArray *voice_onset_m = mxCreateDoubleScalar(voice_onset_f);
             
-            mxArray *static_factor_sqs_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
-            double *static_factor_sqs_mp = mxGetPr(static_factor_sqs_m);
-            mxArray *var_factor_sqs_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
-            double *var_factor_sqs_mp = mxGetPr(var_factor_sqs_m);
-            mxArray *control_factor_sqs_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
-            double *control_factor_sqs_mp = mxGetPr(control_factor_sqs_m);
-            mxArray *estimated_pitch_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
-            double *estimated_pitch_mp = mxGetPr(estimated_pitch_m);
+            mxArray *num_sample_available_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
+            double *num_sample_available_mp = mxGetPr(num_sample_available_m);
+            mxArray *sw_latency_m = mxCreateDoubleMatrix(i_frame+1,1,mxREAL);
+            double *sw_latency_mp = mxGetPr(sw_latency_m);
             
             for(int i = 0; i<i_frame+1; ++i){
-                static_factor_sqs_mp[i] = (double) static_factor_sqs[i];
-                control_factor_sqs_mp[i] = (double) control_factor_sqs[i];
-                var_factor_sqs_mp[i] = (double) var_factor_sqs[i];
-                estimated_pitch_mp[i] = (double) estimated_pitch[i];
+                num_sample_available_mp[i] = (double) num_sample_available[i];
+                sw_latency_mp[i] = (double) sw_latency[i];
             }
 
             if(nlhs >= 1) plhs[0] = input_signal_m;
             if(nlhs >= 2) plhs[1] = output_signal_m;
             if(nlhs >= 3) plhs[2] = voice_onset_m;
-            if(nlhs >= 4) plhs[3] = static_factor_sqs_m;
-            if(nlhs >= 5) plhs[4] = var_factor_sqs_m;
-            if(nlhs >= 6) plhs[5] = control_factor_sqs_m;
-            if(nlhs >= 7) plhs[6] = estimated_pitch_m;
+            if(nlhs >= 4) plhs[3] = num_sample_available_m;
+            if(nlhs >= 5) plhs[4] = sw_latency_m;
             
-            //mexPrintf("Number of processed frames: %i\n",i_frame+1);
+            mexPrintf("Number of processed frames: %i\n",i_frame+1);
 
             return;
         } else if(v1==0){
@@ -458,42 +415,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
             }
             shift_duration_f = (int) floor(mxGetScalar(prhs[5]));
             
-            if( !mxIsDouble(prhs[6]) || mxIsComplex(prhs[6]) || mxGetNumberOfElements(prhs[6])!=1) {
-                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "Seventh input must be a scalar.");
-                return;
-            }
-            do_var = (int) floor(mxGetScalar(prhs[6]));
-            
-            if( !mxIsDouble(prhs[7]) || mxIsComplex(prhs[7]) || mxGetNumberOfElements(prhs[7])!=1) {
-                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "Eighth input must be a scalar.");
-                return;
-            }
-            std_dev = (float) mxGetScalar(prhs[7]);
-            
-            if( !mxIsDouble(prhs[8]) || mxIsComplex(prhs[8]) || mxGetNumberOfElements(prhs[8])!=1) {
-                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "Nineth input must be a scalar.");
-                return;
-            }
-            fc = (float) mxGetScalar(prhs[8]);
-            
-            if( !mxIsDouble(prhs[9]) || mxIsComplex(prhs[9]) || mxGetNumberOfElements(prhs[9])!=1) {
-                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "Tenth input must be a scalar.");
-                return;
-            }
-            do_control = (int) floor(mxGetScalar(prhs[9]));
-            
-            if( !mxIsDouble(prhs[10]) || mxIsComplex(prhs[10]) || mxGetNumberOfElements(prhs[10])!=1) {
-                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "11th input must be a scalar.");
-                return;
-            }
-            kp = (float) mxGetScalar(prhs[10]);
-            
-            if( !mxIsDouble(prhs[11]) || mxIsComplex(prhs[11]) || mxGetNumberOfElements(prhs[11])!=1) {
-                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "12th input must be a scalar.");
-                return;
-            }
-            ki = (float) mxGetScalar(prhs[11]);
-            
             
             
             //get noise
@@ -565,8 +486,8 @@ void gen_beep_sound(double f, double amp){
 
 void gen_piano_sound(double f, double amp){
       
-    Instrmnt *instrument = new Rhodey();
-    //Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
+    //Instrmnt *instrument = new Rhodey();
+    Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
     //Instrmnt *instrument = new Wurley();
     instrument->noteOn(f, amp);
     
@@ -588,68 +509,13 @@ void gen_drum_sound(double f, double amp){
     delete instrument;
 }
 
-// double draw_var(bool init =false){
-//     static double v = 0;
-//     v = (1-delta) * v + delta * distribution_pitch_var(generator);
-//     //double v = distribution_pitch_var(generator);
-//     //if(v > 2*std_var) v=2*std_var;
-//     //if(v < -2*std_var) v=-2*std_var;
-//     return pow(2.0,v/1200.0);
-// }
-
-double draw_var(bool init){
-    //second order butterworth filter (see: http://www.kwon3d.com/theory/filtering/fil.html)
-    
-    static double ym1 = 0;
-    static double ym2 = 0;
-    static double xm1 = 0;
-    static double xm2 = 0;
-    
-    const double pi = 3.14159265358979323846;
-    
-    static double omega;
-    static double c;
-    
-    static double a0;
-    static double a1;
-    static double a2;
-    static double b1;
-    static double b2;
-    
-    if(init){
-        ym1 = 0;
-        ym2 = 0;
-        xm1 = 0;
-        xm2 = 0;
-        
-        omega = tan(pi*fc);
-        c = 1+sqrt(2)*omega+omega*omega;
-
-        a0 = omega*omega/c;
-        a1 = 2*a0;
-        a2 = a0;
-        b1 = 2*(omega*omega-1)/c;
-        b2 = (1-sqrt(2)*omega+omega*omega)/c;
-        
-        return 0;
-    }
-    
-    double x = distribution_pitch_var(generator);
-    
-    if(fc>=0.5){
-        return pow(2.0,x/1200.0);
-    }
-    
-    
-    double y = a0*x+a1*xm1+a2*xm2-b1*ym1-b2*ym2;
-    
-    ym2 = ym1;
-    ym1 = y;
-    xm2 = xm1;
-    xm1 = x;
-    
-    return pow(2.0,y/1200.0);
-    
+double draw_var(void){
+    static double v = 0;
+    v = (1-delta) * v + delta * distribution_pitch_var(generator);
+    //double v = distribution_pitch_var(generator);
+    //if(v > 2*std_var) v=2*std_var;
+    //if(v < -2*std_var) v=-2*std_var;
+    return pow(2.0,v/1200.0);
 }
 
 // void lent_process(float *input, float *output){

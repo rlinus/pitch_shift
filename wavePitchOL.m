@@ -1,7 +1,6 @@
-function [time,f0] = wavePitchOL(x,fs,frameSize, wf)
+function [time,f0] = wavePitchOL(x,fs,frameSize, windowSize)
     x = x(1:end-mod(length(x),frameSize));
-    windowSize = frameSize*wf;
-    n = length(x)/frameSize-wf+1;
+    n = (length(x)-windowSize)/frameSize+1;
     
     f0 = zeros(n,1);
     time = f0;
@@ -9,7 +8,7 @@ function [time,f0] = wavePitchOL(x,fs,frameSize, wf)
     f0(1) = wavePitch(x(1:windowSize),fs);
     time(1) = 1000*windowSize/2/fs;
     for i=2:n
-        f0(i) = wavePitch(x(1+(i-1)*frameSize:(i-1+wf)*frameSize),fs,f0(i-1));
+        f0(i) = wavePitch(x(1+(i-1)*frameSize:(i-1)*frameSize+windowSize),fs,f0(i-1));
         time(i) = time(i-1)+1000*frameSize/fs;
     end
 end

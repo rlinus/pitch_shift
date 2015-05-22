@@ -1,25 +1,25 @@
 function data = vowel_exp_recording
-    data.subject = 'Alessandro';
+    data.subject = 'Linus';
     data.piano_freq = 150;
     save_data = true;
     dir = 'E:\Data\Linus\MATLAB\rec_vowel_exp_data\';
     
-    data.condition = 5;
+    data.condition = 1;
     
     switch data.condition
         case 1
             data.condition_name = 'test';
             save_data = false;
-            data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
-            data.pitch_levels_cents = 0;
+            data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
+            data.pitch_levels_cents = -100;
             data.num_sessions = 1;
-            data.shift_duration_ms = 0;
-            data.voc_duration_ms = 2500;
+            data.shift_duration_ms = 3*1000;
+            data.voc_duration_ms = 2*2500;
             data.shift_onset_interval_ms = [500 500];
             
             data.do_var = 0;
-            data.std_dev = 0;
-            data.fc = 0;
+            data.std_dev = 100;
+            data.fc = 0.01;
 
             data.do_control = 0;
             data.kp  = 0;

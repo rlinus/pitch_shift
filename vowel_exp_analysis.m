@@ -1,13 +1,13 @@
 function data = vowel_exp_analysis(data)
     data.max_pitch_change = 1; %[Hz/ms]
-    data.frame_length = 1000; %[ms]
+    data.frame_length = 40; %[ms]
     data.timestep = 5; %[ms]
     data.min_duration_of_voiced_regions = 150; %[ms]
 
 
     data.F0MinMax = [50 550];
-    data.f0_low=data.piano_freq-100;
-    data.f0_high=data.piano_freq+100; 
+    data.f0_low=0.75*data.piano_freq;
+    data.f0_high=1.25*data.piano_freq; 
 
     
     for i=1:data.num_sessions
