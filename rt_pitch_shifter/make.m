@@ -1,4 +1,7 @@
 function make(varargin)
+    RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+
+    currentFolder = pwd;
     cd(fileparts(which(mfilename)));
     cd('bin');
     
@@ -14,24 +17,24 @@ function make(varargin)
         mex ../stk-4.5.0/src/include/asiodrivers.cpp  -DWIN32 -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include
         mex ../stk-4.5.0/src/include/iasiothiscallresolver.cpp  -DWIN32 -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include
         
-        mex ../stk-4.5.0/src/Stk.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/RtAudio.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FM.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/ADSR.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FileLoop.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/SineWave.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Wurley.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FileWvIn.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FileRead.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/TwoZero.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Rhodey.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/BeeThree.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Drummer.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/OnePole.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/LentPitShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/PitShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Delay.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/DelayL.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/Stk.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/RtAudio.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__  -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/FM.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/ADSR.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/FileLoop.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/SineWave.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/Wurley.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/FileWvIn.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/FileRead.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/TwoZero.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/Rhodey.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/BeeThree.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/Drummer.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/OnePole.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/LentPitShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/PitShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/Delay.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        mex ../stk-4.5.0/src/DelayL.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
         
         mex ../rubberband-1.8.1/src/RubberBandStretcher.cpp -DWIN32  -D__MSVC__ -DUSE_KISSFFT -DUSE_SPEEX -c -I../rubberband-1.8.1
 
@@ -80,10 +83,11 @@ function make(varargin)
         mex ../dywapitchtrack.c -g -c
         mex vowel_shifter.obj smbPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lfftw3-3.lib -output vowel_shifter_smb
     elseif strcmpi(varargin{1},'vowel_shifter_cpv')
-        mex ../vowel_shifter.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include -DCPVSHIFTER
+        path_param = ['-DRAWWAVEPATH=\"' RAWWAVEPATH '\"'];
+        mex('../vowel_shifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', path_param, '-DCPVSHIFTER');
         mex ../cpvPitchShift.cpp -g -c -I../stk-4.5.0/include
         mex ../dywapitchtrack.c -g -c
-        mex vowel_shifter.obj cpvPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lfftw3-3.lib -output vowel_shifter_cpv 
+        mex vowel_shifter.obj cpvPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lfftw3-3.lib -lwinmm -lWsock32 -output vowel_shifter_cpv 
     elseif strcmpi(varargin{1},'vowel_shifter_dirac')
         mex ../vowel_shifter_dirac.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include
         mex ../dywapitchtrack.c -g -c
@@ -92,4 +96,5 @@ function make(varargin)
         fprintf('invalid input\n');
     end
     
+    cd(currentFolder)
 end

@@ -124,7 +124,8 @@ void init(void){
     memset(input_signal,0,sizeof(input_signal));
     memset(output_signal,0,sizeof(output_signal));
           
-    gen_beep_sound(600,0.03);
+    
+    gen_beep_sound(600,0.1);
     gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
 
@@ -478,7 +479,7 @@ double mov_avg(double e){
 
 void gen_beep_sound(double f, double amp){
     const double pi = 3.14159265358979323846;
-    for(int i = 1; i < beep_sound_length; ++i){
+    for(int i = 0; i < beep_sound_length; ++i){
         beep_sound[i] =(float) amp*sin(i *f*2*pi/sampleRate);
     }
     return;

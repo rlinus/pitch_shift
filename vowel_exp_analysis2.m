@@ -7,8 +7,8 @@ function data = vowel_exp_analysis2(data)
     data.frame_length = 1000*data.frame_length_f/data.Fs; %[ms]
     data.timestep = 1000*data.timestep_f/data.Fs; %[ms]
     
-    data.f0_low=0.75*data.piano_freq*2;
-    data.f0_high=1.25*data.piano_freq*2; 
+    data.f0_low=0.75*data.piano_freq;
+    data.f0_high=1.25*data.piano_freq; 
 
 
     
@@ -24,7 +24,12 @@ function data = vowel_exp_analysis2(data)
             if 2 * data.f0_value_s{i}(j) < data.f0_high && 2 * data.f0_value_s{i}(j) > data.f0_low
                 data.f0_value_s{i}(j) = 2 * data.f0_value_s{i}(j);
             elseif 0.5 * data.f0_value_s{i}(j) < data.f0_high && 0.5 * data.f0_value_s{i}(j) > data.f0_low
-                data.f0_value_s{i}(j) = 2 * data.f0_value_s{i}(j);
+                data.f0_value_s{i}(j) = 0.5 * data.f0_value_s{i}(j);
+            end
+            if 2 * data.f0_value_ps_s{i}(j) < data.f0_high && 2 * data.f0_value_ps_s{i}(j) > data.f0_low
+                data.f0_value_ps_s{i}(j) = 2 * data.f0_value_ps_s{i}(j);
+            elseif 0.5 * data.f0_value_ps_s{i}(j) < data.f0_high && 0.5 * data.f0_value_ps_s{i}(j) > data.f0_low
+                data.f0_value_ps_s{i}(j) = 0.5 * data.f0_value_ps_s{i}(j);
             end
         end
         

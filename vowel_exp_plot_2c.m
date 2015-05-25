@@ -1,5 +1,4 @@
-function data = vowel_exp_plot_2c(data_c1,data_c2)
-    data.correct_bias = true;
+function vowel_exp_plot_2c(data_c1,data_c2)
     
     if data_c1.piano_freq ~= data_c2.piano_freq 
         warning('reference frequencies must be the same'); return;
@@ -16,8 +15,7 @@ function data = vowel_exp_plot_2c(data_c1,data_c2)
         warning('plot settings must be the same'); return;
     end
     
-    data.cols={'r','m','g','c','b','k','y'};
-    l = round(data_c1.latency_ms/data_c1.timestep)+1;
+    cols={'r','m','g','c','b','k','y'};
     
     h1 = figure;
     h1a = subplot(2,1,1);
@@ -27,11 +25,11 @@ function data = vowel_exp_plot_2c(data_c1,data_c2)
         subplot(2,1,1);
         hold on;
         
-        plot(data_c1.time,data_c1.f0_means(i,:),'Color',data.cols{i},'LineWidth', 1);
-        %plot(data_c1.time(l:end),data_c1.f0_means_ps(i,l:end),'Color',data.cols{i},'LineWidth', 1,'LineStyle', '--');
+        plot(data_c1.time,data_c1.f0_means(i,:),'Color',cols{i},'LineWidth', 1);
+        %plot(data_c1.time(l:end),data_c1.f0_means_ps(i,l:end),'Color',cols{i},'LineWidth', 1,'LineStyle', '--');
 
         subplot(2,1,2);
-        plot(data_c1.time,data_c1.f0_std(i,:),'Color',data.cols{i},'LineWidth', 1);
+        plot(data_c1.time,data_c1.f0_std(i,:),'Color',cols{i},'LineWidth', 1);
         hold on;
 
 
@@ -41,15 +39,17 @@ function data = vowel_exp_plot_2c(data_c1,data_c2)
     for i=1:length(data_c1.pitch_levels_cents)
         subplot(2,1,1);
         hold on;
-        plot(data_c2.time,data_c2.f0_means(i,:),'Color',data.cols{i+last_i},'LineWidth', 1);
-        %plot(data_c2.time(l:end),data_c2.f0_means_ps(i,l:end),'Color',data.cols{i+last_i},'LineWidth', 1,'LineStyle', '--');
+        plot(data_c2.time,data_c2.f0_means(i,:),'Color',cols{i+last_i},'LineWidth', 1);
+        %plot(data_c2.time(l:end),data_c2.f0_means_ps(i,l:end),'Color',cols{i+last_i},'LineWidth', 1,'LineStyle', '--');
 
         subplot(2,1,2);
-        plot(data_c2.time,data_c2.f0_std(i,:),'Color',data.cols{i+last_i},'LineWidth', 1);
+        plot(data_c2.time,data_c2.f0_std(i,:),'Color',cols{i+last_i},'LineWidth', 1);
         hold on;
 
         leg1{i+last_i} = sprintf('%i cents (%s)',data_c2.pitch_levels_cents(i), strrep(data_c2.condition_name, '_', ' '));
     end
+    xlim(h1a,[-data_c1.time_before_shift_ms,data_c1.time_after_shift_ms]);
+    xlim(h1b,[-data_c1.time_before_shift_ms,data_c1.time_after_shift_ms]);
     ylabel(subplot(2,1,1),'f0 [Hz]'); ylabel(subplot(2,1,2),'std [Hz]');
     xlabel(subplot(2,1,1),'time [ms]'); xlabel(subplot(2,1,2),'time [ms]');
     legend(subplot(2,1,2),leg1);
@@ -68,11 +68,11 @@ function data = vowel_exp_plot_2c(data_c1,data_c2)
         subplot(2,1,1);
         hold on;
         
-        plot(data_c1.time,data_c1.f0_means_cents(i,:),'Color',data.cols{i},'LineWidth', 1);
-        %plot(data_c1.time(l:end),data_c1.f0_means_ps_cents(i,l:end),'Color',data.cols{i},'LineWidth', 1,'LineStyle', '--');
+        plot(data_c1.time,data_c1.f0_means_cents(i,:),'Color',cols{i},'LineWidth', 1);
+        %plot(data_c1.time(l:end),data_c1.f0_means_ps_cents(i,l:end),'Color',cols{i},'LineWidth', 1,'LineStyle', '--');
 
         subplot(2,1,2);
-        plot(data_c1.time,data_c1.f0_std(i,:),'Color',data.cols{i},'LineWidth', 1);
+        plot(data_c1.time,data_c1.f0_std(i,:),'Color',cols{i},'LineWidth', 1);
         hold on;
 
 
@@ -82,15 +82,17 @@ function data = vowel_exp_plot_2c(data_c1,data_c2)
     for i=1:length(data_c1.pitch_levels_cents)
         subplot(2,1,1);
         hold on;
-        plot(data_c2.time,data_c2.f0_means_cents(i,:),'Color',data.cols{i+last_i},'LineWidth', 1);
-        %plot(data_c2.time(l:end),data_c2.f0_means_ps_cents(i,l:end),'Color',data.cols{i+last_i},'LineWidth', 1,'LineStyle', '--');
+        plot(data_c2.time,data_c2.f0_means_cents(i,:),'Color',cols{i+last_i},'LineWidth', 1);
+        %plot(data_c2.time(l:end),data_c2.f0_means_ps_cents(i,l:end),'Color',cols{i+last_i},'LineWidth', 1,'LineStyle', '--');
 
         subplot(2,1,2);
-        plot(data_c2.time,data_c2.f0_std(i,:),'Color',data.cols{i+last_i},'LineWidth', 1);
+        plot(data_c2.time,data_c2.f0_std(i,:),'Color',cols{i+last_i},'LineWidth', 1);
         hold on;
 
         leg1{i+last_i} = sprintf('%i cents (%s)',data_c2.pitch_levels_cents(i), strrep(data_c2.condition_name, '_', ' '));
     end
+    xlim(h2a,[-data_c1.time_before_shift_ms,data_c1.time_after_shift_ms]);
+    xlim(h2b,[-data_c1.time_before_shift_ms,data_c1.time_after_shift_ms]);
     ylabel(subplot(2,1,1),'f0 [cents]'); ylabel(subplot(2,1,2),'std [Hz]');
     xlabel(subplot(2,1,1),'time [ms]'); xlabel(subplot(2,1,2),'time [ms]');
     legend(subplot(2,1,2),leg1);

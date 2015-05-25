@@ -13,8 +13,8 @@ function data = vowel_exp_recording
             data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = -100;
             data.num_sessions = 1;
-            data.shift_duration_ms = 3*1000;
-            data.voc_duration_ms = 2*2500;
+            data.shift_duration_ms = 1000;
+            data.voc_duration_ms = 2500;
             data.shift_onset_interval_ms = [500 500];
             
             data.do_var = 0;

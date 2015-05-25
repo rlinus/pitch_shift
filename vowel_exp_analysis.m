@@ -2,7 +2,7 @@ function data = vowel_exp_analysis(data)
     data.max_pitch_change = 1; %[Hz/ms]
     data.frame_length = 40; %[ms]
     data.timestep = 5; %[ms]
-    data.min_duration_of_voiced_regions = 150; %[ms]
+    data.min_duration_of_voiced_regions = 50; %[ms]
 
 
     data.F0MinMax = [50 550];

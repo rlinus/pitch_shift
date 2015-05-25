@@ -22,6 +22,10 @@
     #error "PITCHSHIFTER is not defined!"
 #endif
 
+#define DEVICEID 0
+//#define RAWWAVEPATH "C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/"
+
+
 using namespace std;
 using namespace stk;
 
@@ -93,7 +97,7 @@ const int num_noise_frames = 5000;
 double pink_noise[num_noise_frames*frameSize];
 int i_noise_frame = 0;
 
-const int beep_sound_length = 20*sampleRate;
+const int beep_sound_length = 5*sampleRate;
 double beep_sound[beep_sound_length];
 
 const int drum_sound_length = 1*sampleRate;
@@ -121,7 +125,7 @@ double control_error_sum = 0;
 
 void init(void){
     Stk::setSampleRate(sampleRate);
-    Stk::setRawwavePath( "../stk-4.5.0/rawwaves/" );
+    Stk::setRawwavePath(RAWWAVEPATH);
     
     i_frame = -1;
     
@@ -144,7 +148,7 @@ void init(void){
     
     draw_var(true);
           
-    //gen_beep_sound(ref_sound_freq,0.1);
+    gen_beep_sound(600,0.1);
     gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
 
@@ -301,11 +305,11 @@ void start_stream(void)
 {   
     
     RtAudio::StreamParameters oparameters;
-    oparameters.deviceId = 0; //dac.getDefaultOutputDevice();
+    oparameters.deviceId = DEVICEID; //dac.getDefaultOutputDevice();
 	oparameters.nChannels = 2;
 
 	RtAudio::StreamParameters iparameters;
-	iparameters.deviceId = 0; //dac.getDefaultInputDevice();
+	iparameters.deviceId = DEVICEID; //dac.getDefaultInputDevice();
 	iparameters.nChannels = 1;
     
     RtAudio::StreamOptions options;
@@ -579,35 +583,42 @@ double mov_avg(double e){
 
 void gen_beep_sound(double f, double amp){
     const double pi = 3.14159265358979323846;
-    for(int i = 1; i < beep_sound_length; ++i){
-        beep_sound[i] =(double) amp*sin(i *f*2*pi/sampleRate);
+    for(int i = 0; i < beep_sound_length; ++i){
+        beep_sound[i] = amp*sin(i *f*2*pi/sampleRate);
     }
     return;
 }
 
 void gen_piano_sound(double f, double amp){
-      
-    Instrmnt *instrument = new Rhodey();
-    //Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
-    //Instrmnt *instrument = new Wurley();
-    instrument->noteOn(f, amp);
-    
-    for(int i = 0; i < piano_sound_length; ++i){
-        piano_sound[i] = (double) instrument->tick();
+    try{
+        Instrmnt *instrument = new Rhodey();
+        //Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
+        //Instrmnt *instrument = new Wurley();
+        instrument->noteOn(f, amp);
+
+        for(int i = 0; i < piano_sound_length; ++i){
+            piano_sound[i] = (double) instrument->tick();
+        }
+
+        delete instrument;
+    }catch(...){
+        mexPrintf("Problem generating piano sound. Recompile!\n");
     }
-    
-    delete instrument;
 }
 
 void gen_drum_sound(double f, double amp){
-    Instrmnt *instrument = new Drummer();
-    instrument->noteOn(f, amp);
-    
-    for(int i = 0; i < drum_sound_length; ++i){
-        drum_sound[i] = (double) instrument->tick();
+    try{
+        Instrmnt *instrument = new Drummer();
+        instrument->noteOn(f, amp);
+
+        for(int i = 0; i < drum_sound_length; ++i){
+            drum_sound[i] = (double) instrument->tick();
+        }
+
+        delete instrument;
+    }catch(...){
+        mexPrintf("Problem generating drum sound. Recompile!\n");
     }
-    
-    delete instrument;
 }
 
 // double draw_var(bool init =false){
