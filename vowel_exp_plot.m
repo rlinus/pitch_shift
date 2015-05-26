@@ -2,7 +2,7 @@ function data = vowel_exp_plot(data)
     data.correct_bias = true;
     data.ref = 'constant';
     %data.ref = 'time variant';
-    data.invalid_sessions = [24 27 28];
+    data.invalid_sessions = [];
     data.ref_freq = data.piano_freq;
     data.latency_ms=20;
     

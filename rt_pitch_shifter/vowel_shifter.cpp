@@ -109,6 +109,8 @@ double piano_sound[piano_sound_length];
 volatile int is_finished = 0;
 
 bool do_var = true;
+bool do_var_whole_session = false;
+double quant_size = 30;
 double std_dev = 200.0;
 double fc = 0.005; //normalized: 1 corresponds to samplingfreq (must be smaller than 0.5)
 int T_var_f = 1;
@@ -194,16 +196,16 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
     
     int window_length_factor=16;
-    if(i_frame>=window_length_factor){
-        estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
-        if (2*estimated_pitch[i_frame]>0.75*ref_sound_freq && 2*estimated_pitch[i_frame]<1.25*ref_sound_freq){
-            estimated_pitch[i_frame] = 2 * estimated_pitch[i_frame];
-        }else if(0.5*estimated_pitch[i_frame]>0.75*ref_sound_freq && 0.5*estimated_pitch[i_frame]<1.25*ref_sound_freq){
-            estimated_pitch[i_frame] = 0.5 * estimated_pitch[i_frame];
-        }
-    }else{
-        estimated_pitch[i_frame] = 0;
-    }
+//     if(i_frame>=window_length_factor){
+//         estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
+//         if (2*estimated_pitch[i_frame]>0.75*ref_sound_freq && 2*estimated_pitch[i_frame]<1.25*ref_sound_freq){
+//             estimated_pitch[i_frame] = 2 * estimated_pitch[i_frame];
+//         }else if(0.5*estimated_pitch[i_frame]>0.75*ref_sound_freq && 0.5*estimated_pitch[i_frame]<1.25*ref_sound_freq){
+//             estimated_pitch[i_frame] = 0.5 * estimated_pitch[i_frame];
+//         }
+//     }else{
+//         estimated_pitch[i_frame] = 0;
+//     }
     
     if(shift_after_voice_onset){
  
@@ -313,8 +315,8 @@ void start_stream(void)
 	iparameters.nChannels = 1;
     
     RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_HOG_DEVICE | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_MINIMIZE_LATENCY;
-    options.priority = 10000000;
+    options.flags = RTAUDIO_HOG_DEVICE;// | RTAUDIO_SCHEDULE_REALTIME | RTAUDIO_MINIMIZE_LATENCY;
+    //options.priority = 10000000;
     
     unsigned int bufferFrames = frameSize;
     
@@ -649,6 +651,7 @@ double draw_var(bool init){
     static double b1;
     static double b2;
     
+    
     if(init){
         ym1 = 0;
         ym2 = 0;
@@ -669,17 +672,22 @@ double draw_var(bool init){
     
     double x = distribution_pitch_var(generator);
     
+    double y;
+    
     if(fc>=0.5){
-        return pow(2.0,x/1200.0);
+        y=x;
+    }else{
+        y = a0*x+a1*xm1+a2*xm2-b1*ym1-b2*ym2;
+
+        ym2 = ym1;
+        ym1 = y;
+        xm2 = xm1;
+        xm1 = x;
     }
     
-    
-    double y = a0*x+a1*xm1+a2*xm2-b1*ym1-b2*ym2;
-    
-    ym2 = ym1;
-    ym1 = y;
-    xm2 = xm1;
-    xm1 = x;
+    if(quant_size > 0){
+        y = quant_size*round(y/quant_size);
+    }
     
     return pow(2.0,y/1200.0);
     

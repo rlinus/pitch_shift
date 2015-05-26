@@ -77,7 +77,9 @@ void cpvPitchShift(double pitchShift, double *indata, double *outdata)
     int ifftFrameSize = lround(fftFrameSize/pitchShift);
     double Hopratio = fftFrameSize/(double)ifftFrameSize;
 
-    
+//     double Hopratio = round(stepSize * pitchShift)/(double)stepSize;
+//     int ifftFrameSize = round(fftFrameSize/Hopratio);
+
     memcpy(&gInFIFO[inFifoLatency], indata, (size_t) stepSize*sizeof(double));
     
     /* do windowing and re,im interleave */
@@ -99,6 +101,8 @@ void cpvPitchShift(double pitchShift, double *indata, double *outdata)
         /* compute magnitude and phase */
         magn = sqrt(real*real + imag*imag);
         phase = atan2(imag,real);
+        
+        //magn = 10*log(1+magn/4);
 
         /* compute phase difference */
         tmp = (phase - gLastPhase[k]);

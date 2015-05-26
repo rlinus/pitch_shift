@@ -1,6 +1,7 @@
 function make(varargin)
-    RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
-
+    %RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    
     currentFolder = pwd;
     cd(fileparts(which(mfilename)));
     cd('bin');
@@ -9,6 +10,8 @@ function make(varargin)
         fprintf('specify target');
         return;
     end
+    
+    path_param = ['-DRAWWAVEPATH=\"' RAWWAVEPATH '\"'];
     
     if strcmpi(varargin{1},'libs')
         % compile extern code
@@ -78,12 +81,11 @@ function make(varargin)
         mex ../vowel_shifter_rubberband.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include -I../rubberband-1.8.1/rubberband
         mex vowel_shifter.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj
     elseif strcmpi(varargin{1},'vowel_shifter_smb')
-        mex ../vowel_shifter.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include -DSMBSHIFTER
+        mex('../vowel_shifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', path_param, '-DSMBSHIFTER');
         mex ../smbPitchShift.cpp -g -c -I../stk-4.5.0/include
         mex ../dywapitchtrack.c -g -c
         mex vowel_shifter.obj smbPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lfftw3-3.lib -output vowel_shifter_smb
     elseif strcmpi(varargin{1},'vowel_shifter_cpv')
-        path_param = ['-DRAWWAVEPATH=\"' RAWWAVEPATH '\"'];
         mex('../vowel_shifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', path_param, '-DCPVSHIFTER');
         mex ../cpvPitchShift.cpp -g -c -I../stk-4.5.0/include
         mex ../dywapitchtrack.c -g -c
