@@ -14,7 +14,7 @@ lev0=3;
 levs=[1 2 4 5];
 %levs=[1 3];
 
-do_var=0;
+do_var=1;
 std_lev=20;
 varprob=1;
 

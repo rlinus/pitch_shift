@@ -7,7 +7,7 @@ function data = vowel_exp_plot(data)
     data.latency_ms=20;
     
     data.time_before_shift_ms = 300;
-    data.time_after_shift_ms = 1300;
+    data.time_after_shift_ms = 700;
     
     if data.mode==1, data.time_before_shift_ms=0; end;
 

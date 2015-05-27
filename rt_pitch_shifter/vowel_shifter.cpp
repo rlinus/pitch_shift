@@ -18,6 +18,8 @@
     #include "cpvPitchShift.h"
 #elif defined SMBSHIFTER
     #include "smbPitchShift.h"
+#elif defined DIRACSHIFTER
+    #include "Dirac.h"
 #else
     #error "PITCHSHIFTER is not defined!"
 #endif
@@ -46,6 +48,10 @@ const int sampleRate = 44100;
 RtAudio dac;
 
 //PitShift lentshifter = PitShift();
+
+#ifdef DIRACSHIFTER
+    void *diracFx = DiracFxCreate(kDiracQualityBest, sampleRate, 1);
+#endif
 
 _dywapitchtracker pitchtracker;
 
@@ -110,8 +116,8 @@ volatile int is_finished = 0;
 
 bool do_var = true;
 bool do_var_whole_session = false;
-double quant_size = 30;
-int T_var_f = 1;
+double quant_size = 10;
+int T_var_f = 8;
 double std_dev = 200.0;
 double fc = 0.005; //normalized: 1 corresponds to samplingfreq (must be smaller than 0.5)
 default_random_engine generator;
@@ -196,16 +202,16 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     memcpy(&input_signal[i_frame*frameSize], ibuffer,sizeof(input_signal[0])*nBufferFrames);
     
     int window_length_factor=16;
-//     if(i_frame>=window_length_factor){
-//         estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
-//         if (2*estimated_pitch[i_frame]>0.75*ref_sound_freq && 2*estimated_pitch[i_frame]<1.25*ref_sound_freq){
-//             estimated_pitch[i_frame] = 2 * estimated_pitch[i_frame];
-//         }else if(0.5*estimated_pitch[i_frame]>0.75*ref_sound_freq && 0.5*estimated_pitch[i_frame]<1.25*ref_sound_freq){
-//             estimated_pitch[i_frame] = 0.5 * estimated_pitch[i_frame];
-//         }
-//     }else{
-//         estimated_pitch[i_frame] = 0;
-//     }
+    if(i_frame>=window_length_factor){
+        estimated_pitch[i_frame] = dywapitch_computepitch(&pitchtracker, &input_signal[(i_frame+1-window_length_factor)*frameSize], 0, window_length_factor*frameSize);
+        if (2*estimated_pitch[i_frame]>0.75*ref_sound_freq && 2*estimated_pitch[i_frame]<1.25*ref_sound_freq){
+            estimated_pitch[i_frame] = 2 * estimated_pitch[i_frame];
+        }else if(0.5*estimated_pitch[i_frame]>0.75*ref_sound_freq && 0.5*estimated_pitch[i_frame]<1.25*ref_sound_freq){
+            estimated_pitch[i_frame] = 0.5 * estimated_pitch[i_frame];
+        }
+    }else{
+        estimated_pitch[i_frame] = 0;
+    }
     
     if(shift_after_voice_onset){
  
@@ -285,6 +291,17 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     	cpvPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
     #elif defined SMBSHIFTER
         smbPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
+    #elif defined DIRACSHIFTER
+        float in[frameSize];
+        float out[frameSize];
+        for(int i=0; i < frameSize; ++i){
+            in[i] = (float) ibuffer[i];
+        }
+        
+        DiracFxProcessFloatInterleaved(1.0, static_factor*var_factor*control_factor, in, out, frameSize, diracFx);
+        for(int i=0; i < frameSize; ++i){
+            output[i] = out[i];
+        }
     #endif
     
     if(i_frame>=window_length_factor*4){
@@ -353,6 +370,10 @@ void start_stream(void)
     int lat_hw = dac.getStreamLatency();
     
     //mexPrintf("HW latency: %i\n",lat_hw);
+    
+    #ifdef DIRACSHIFTER
+        mexPrintf("SW latency: %i\n",DiracFxLatencyFrames(sampleRate));
+    #endif
     
     return;
 }

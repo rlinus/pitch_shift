@@ -1,5 +1,5 @@
 function data = vowel_exp_recording
-    data.subject = 'June';
+    data.subject = 'Linus';
     data.piano_freq = 150;
     save_data = true;
     dir = 'E:\Data\Linus\MATLAB\rec_vowel_exp_data\';
@@ -11,17 +11,17 @@ function data = vowel_exp_recording
         case 1
             data.condition_name = 'test';
             save_data = false;
-            data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
+            data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = 0;
             data.num_sessions = 1;
-            data.shift_duration_ms = 1000;
-            data.voc_duration_ms = 2*2500;
+            data.shift_duration_ms = 400;
+            data.voc_duration_ms = 10*1000;
             data.shift_onset_interval_ms = [500 500];
             
             data.do_var = 1;
             data.do_var_whole_session = 1;
-            data.std_dev = 400;
-            data.fc = 0.01/2;
+            data.std_dev = 100;
+            data.fc = 0.05*2;
 
             data.do_control = 0;
             data.kp  = 0;
@@ -122,6 +122,55 @@ function data = vowel_exp_recording
             data.noise_gain = 0;
             
             data.pause_between_sessions_s = 1.0;  
+            data.play_ref_whole_session = 1; %1: no, -1: yes
+        case 6
+            data.condition_name = 'constshort';
+            
+            data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
+            data.pitch_levels_cents = [-100  0 100];
+            data.num_sessions = 60;
+            data.shift_duration_ms = 400;
+            data.voc_duration_ms = 2000;
+            data.shift_onset_interval_ms = [500 900];
+            
+            data.do_var = 0;
+            data.do_var_whole_session = 0;
+            data.std_dev = 0;
+            data.fc = 0;
+
+            data.do_control = 0;
+            data.kp  = 0;
+            data.ki = 0;
+            
+            data.noise_gain = 0.002;
+            
+            data.pause_between_sessions_s = 0.5;  
+            data.play_ref_whole_session = 1; %1: no, -1: yes
+        case 7
+            data.condition_name = 'varshort';
+            
+            data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
+            data.pitch_levels_cents = [-100  0 100];
+            data.num_sessions = 60;
+            data.shift_duration_ms = 400;
+            data.voc_duration_ms = 2000;
+            data.shift_onset_interval_ms = [500 900];
+            
+            data.do_var = 1;
+            data.do_var_whole_session = 2;
+            data.std_dev = 200;
+            data.fc = 0.05;
+            
+            %double quant_size = 10;
+            %int T_var_f = 8;
+
+            data.do_control = 0;
+            data.kp  = 0;
+            data.ki = 0;
+            
+            data.noise_gain = 0.002;
+            
+            data.pause_between_sessions_s = 0.7;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
         otherwise
             fprinf('condition doesn'' exist!\n');

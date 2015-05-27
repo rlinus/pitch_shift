@@ -1,6 +1,6 @@
 function make(varargin)
-    RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
-    %RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    %RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
     
     currentFolder = pwd;
     cd(fileparts(which(mfilename)));
@@ -91,9 +91,9 @@ function make(varargin)
         mex ../dywapitchtrack.c -g -c
         mex vowel_shifter.obj cpvPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lfftw3-3.lib -lwinmm -lWsock32 -output vowel_shifter_cpv 
     elseif strcmpi(varargin{1},'vowel_shifter_dirac')
-        mex ../vowel_shifter_dirac.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -g -c -I../stk-4.5.0/include
+        mex('../vowel_shifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', path_param, '-DDIRACSHIFTER');
         mex ../dywapitchtrack.c -g -c
-        mex vowel_shifter_dirac.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lDiracLE.lib
+        mex vowel_shifter.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -L../ -lDiracLE.lib -output vowel_shifter_dirac
     else
         fprintf('invalid input\n');
     end
