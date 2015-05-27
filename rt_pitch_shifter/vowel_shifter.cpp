@@ -111,9 +111,9 @@ volatile int is_finished = 0;
 bool do_var = true;
 bool do_var_whole_session = false;
 double quant_size = 30;
+int T_var_f = 1;
 double std_dev = 200.0;
 double fc = 0.005; //normalized: 1 corresponds to samplingfreq (must be smaller than 0.5)
-int T_var_f = 1;
 default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
 
@@ -212,9 +212,11 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         if(!do_var){
             if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f){
                 static_factor = pitch_factor;
-                var_factor = 1.0;
-            } 
-        }else{
+            }
+            if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f + shift_duration_f){
+                static_factor = 1.0;
+            }
+        }else if(!do_var_whole_session){
             static int i_frame_start;
             if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f){
                 i_frame_start = i_frame;
@@ -225,13 +227,24 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
                     var_factor = draw_var();
                 }
             }
-            
-        }
-        
-        if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f + shift_duration_f){
+            if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f + shift_duration_f){
                 static_factor = 1.0;
                 var_factor = 1.0;
+            }
+            
+        } else{
+            if(i_frame%T_var_f == 0){
+                var_factor = draw_var();
+            }
+            if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f){
+                static_factor = pitch_factor;
+            }
+            if(voice_onset_f > -1 && i_frame - voice_onset_f == shift_onset_f + shift_duration_f){
+                static_factor = 1.0;
+            }
         }
+        
+        
     }else if(do_var){
         if(i_frame%T_var_f == 0){
             static_factor = pitch_factor;
@@ -521,6 +534,23 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 return;
             }
             ki = (double) mxGetScalar(prhs[11]);
+            
+            if( !mxIsDouble(prhs[12]) || mxIsComplex(prhs[12]) || mxGetNumberOfElements(prhs[12])!=1) {
+                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "13th input must be a scalar.");
+                return;
+            }
+            do_var_whole_session = (int) mxGetScalar(prhs[12]);
+            
+            if( !mxIsDouble(prhs[13]) || mxIsComplex(prhs[13]) || mxGetNumberOfElements(prhs[13])!=1) {
+                mexErrMsgIdAndTxt("rt_pitch_shifter:notScalar", "14th input must be a scalar.");
+                return;
+            }
+            noise_gain = (double) mxGetScalar(prhs[13]);
+            if(noise_gain > 0){
+                add_pink_noise = true;
+            }else{
+                add_pink_noise = false;
+            }
             
             
             

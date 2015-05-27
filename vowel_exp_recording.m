@@ -6,6 +6,7 @@ function data = vowel_exp_recording
     
     data.condition = 1;
     
+    
     switch data.condition
         case 1
             data.condition_name = 'test';
@@ -18,12 +19,15 @@ function data = vowel_exp_recording
             data.shift_onset_interval_ms = [500 500];
             
             data.do_var = 1;
+            data.do_var_whole_session = 1;
             data.std_dev = 400;
             data.fc = 0.01/2;
 
             data.do_control = 0;
             data.kp  = 0;
             data.ki = 0;
+            
+            data.noise_gain = 0.0;
             
             data.pause_between_sessions_s = 0.7;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
@@ -38,12 +42,15 @@ function data = vowel_exp_recording
             data.shift_onset_interval_ms = [500 900];
             
             data.do_var = 0;
+            data.do_var_whole_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
             data.do_control = 0;
             data.kp  = 0;
             data.ki = 0;
+            
+            data.noise_gain = 0;
             
             data.pause_between_sessions_s = 0.7;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
@@ -58,12 +65,15 @@ function data = vowel_exp_recording
             data.shift_onset_interval_ms = [500 900];
             
             data.do_var = 1;
+            data.do_var_whole_session = 0;
             data.std_dev = 100;
             data.fc = 0.01;
 
             data.do_control = 0;
             data.kp  = 0;
             data.ki = 0;
+            
+            data.noise_gain = 0;
             
             data.pause_between_sessions_s = 0.7;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
@@ -78,12 +88,15 @@ function data = vowel_exp_recording
             data.shift_onset_interval_ms = [4000 4000];
             
             data.do_var = 0;
+            data.do_var_whole_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
             data.do_control = 0;
             data.kp  = 0;
             data.ki = 0;
+            
+            data.noise_gain = 0;
             
             data.pause_between_sessions_s = 1.0;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
@@ -98,12 +111,15 @@ function data = vowel_exp_recording
             data.shift_onset_interval_ms = [4000 4000];
             
             data.do_var = 0;
+            data.do_var_whole_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
             data.do_control = 1;
             data.kp  = 0;
             data.ki = 2.5;
+            
+            data.noise_gain = 0;
             
             data.pause_between_sessions_s = 1.0;  
             data.play_ref_whole_session = 1; %1: no, -1: yes
@@ -140,7 +156,7 @@ function data = vowel_exp_recording
 
     for i=1:data.num_sessions
         fprintf('session %i...\n',i);
-        data.shifter_function(data.mode, data.pitch_level_sqs(i), data.voc_duration_f, data.play_ref_whole_session*data.piano_freq, data.shift_onset_f(i), data.shift_duration_f, data.do_var, data.std_dev, data.fc, data.do_control, data.kp, data.ki);
+        data.shifter_function(data.mode, data.pitch_level_sqs(i), data.voc_duration_f, data.play_ref_whole_session*data.piano_freq, data.shift_onset_f(i), data.shift_duration_f, data.do_var, data.std_dev, data.fc, data.do_control, data.kp, data.ki, data.do_var_whole_session, data.noise_gain);
         while(data.shifter_function(0) == 0)
             pause(0.2);
         end
