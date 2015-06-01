@@ -20,6 +20,9 @@
     #include "smbPitchShift.h"
 #elif defined DIRACSHIFTER
     #include "Dirac.h"
+#elif defined RUBBERBAND
+    #include "RubberBandStretcher.h"
+    using namespace RubberBand;
 #else
     #error "PITCHSHIFTER is not defined!"
 #endif
@@ -49,8 +52,17 @@ RtAudio dac;
 
 //PitShift lentshifter = PitShift();
 
-#ifdef DIRACSHIFTER
+#if defined DIRACSHIFTER
     void *diracFx = DiracFxCreate(kDiracQualityBest, sampleRate, 1);
+#elif defined RUBBERBAND
+    RubberBandStretcher::Options options =  RubberBandStretcher::OptionProcessRealTime |
+                                        RubberBandStretcher::OptionFormantPreserved |
+                                        RubberBandStretcher::OptionWindowShort |
+                                        //RubberBandStretcher::OptionSmoothingOn |
+                                        //RubberBandStretcher::OptionPhaseIndependent |
+                                        //RubberBandStretcher::OptionTransientsSmooth |
+                                        RubberBandStretcher::OptionPitchHighQuality;//Consistency;
+    RubberBandStretcher shifter(sampleRate,1,options,1.0,1.0);
 #endif
 
 _dywapitchtracker pitchtracker;
@@ -171,6 +183,8 @@ void init(void){
     	cpvPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
     #elif defined SMBSHIFTER
         smbPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+    #elif defined RUBBERBAND
+        shifter.reset();
     #endif
 }
 
@@ -302,11 +316,34 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         for(int i=0; i < frameSize; ++i){
             output[i] = out[i];
         }
+    #elif defined RUBBERBAND
+        float in[frameSize];
+        float out[frameSize];
+        float * in_p = in;
+        float * out_p = out;
+        for(int i=0; i < frameSize; ++i){
+            in[i] = (float) ibuffer[i];
+        }
+        
+        shifter.setPitchScale(static_factor*var_factor*control_factor);
+        shifter.process(&in_p, frameSize,0);
+        int r = shifter.available();
+        
+        if(r>=frameSize && i_frame+1>=18){
+            shifter.retrieve(&out_p, frameSize);
+            for(int i=0; i < frameSize; ++i){
+                output[i] = out[i];
+            }
+        }else{
+            for(int i=0; i < frameSize; ++i){
+                output[i] = 0;
+            }
+        }     
     #endif
     
-    if(i_frame>=window_length_factor*4){
-        memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(double));
-    }
+    //if(i_frame>=window_length_factor*4){
+    memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(double));
+    //}
     
      //memcpy(&output_signal[i_frame*frameSize],ibuffer,frameSize*sizeof(double));
     

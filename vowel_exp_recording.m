@@ -11,14 +11,14 @@ function data = vowel_exp_recording
         case 1
             data.condition_name = 'test';
             save_data = false;
-            data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
-            data.pitch_levels_cents = 0;
+            data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
+            data.pitch_levels_cents = 200;
             data.num_sessions = 1;
-            data.shift_duration_ms = 400;
-            data.voc_duration_ms = 10*1000;
-            data.shift_onset_interval_ms = [500 500];
+            data.shift_duration_ms = 3*400;
+            data.voc_duration_ms = 3000;
+            data.shift_onset_interval_ms = 2*[500 500];
             
-            data.do_var = 1;
+            data.do_var = 0;
             data.do_var_whole_session = 1;
             data.std_dev = 100;
             data.fc = 0.05*2;
@@ -177,7 +177,7 @@ function data = vowel_exp_recording
             return;
     end
     
-    data.shifter_function = @vowel_shifter_cpv;
+    data.shifter_function = @vowel_shifter_rubberband;
     data.rec_date = datetime('now');
     
     data.frameSize = 64;
