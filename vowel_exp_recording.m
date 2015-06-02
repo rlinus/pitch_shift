@@ -27,7 +27,7 @@ function data = vowel_exp_recording
             data.kp  = 0;
             data.ki = 0;
             
-            data.noise_gain = 0.0;
+            data.noise_gain = 0.05;
             
             data.pause_between_sessions_s = 0.7;  
             data.play_ref_whole_session = 1; %1: no, -1: yes

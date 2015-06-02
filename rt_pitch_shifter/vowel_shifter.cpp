@@ -60,7 +60,7 @@ RtAudio dac;
                                         RubberBandStretcher::OptionWindowShort |
                                         //RubberBandStretcher::OptionSmoothingOn |
                                         //RubberBandStretcher::OptionPhaseIndependent |
-                                        //RubberBandStretcher::OptionTransientsSmooth |
+                                        RubberBandStretcher::OptionTransientsSmooth |
                                         RubberBandStretcher::OptionPitchHighQuality;//Consistency;
     RubberBandStretcher shifter(sampleRate,1,options,1.0,1.0);
 #endif
