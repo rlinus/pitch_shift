@@ -1,4 +1,6 @@
 function [time,f0] = wavePitchOL(x,fs,frameSize, windowSize)
+    % wrapper function for wavePitch
+    % time is in ms
     x = x(1:end-mod(length(x),frameSize));
     n = (length(x)-windowSize)/frameSize+1;
     

@@ -83,7 +83,7 @@ double control_factor_sqs[data_array_length/frameSize];
 
 const int mov_avg_width = 10;
 
-const double threshold = 0.03f;
+const double threshold = 0.15;//0.03;
 int voice_onset_f;
 int shift_onset_f;
 int shift_duration_f;

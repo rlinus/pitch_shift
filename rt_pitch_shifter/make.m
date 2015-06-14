@@ -1,6 +1,6 @@
 function make(varargin)
-    %RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
-    RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    %RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
     
     currentFolder = pwd;
     cd(fileparts(which(mfilename)));
@@ -97,6 +97,9 @@ function make(varargin)
     elseif strcmpi(varargin{1},'vowel_shifter_rubberband')
         mex('../vowel_shifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', '-I../rubberband-1.8.1/rubberband', path_param, '-DRUBBERBAND');
         mex vowel_shifter.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj -lwinmm -lWsock32 -output vowel_shifter_rubberband
+    elseif strcmpi(varargin{1},'pitch_loop')
+        mex('../pitch_loop.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', '-I../rubberband-1.8.1/rubberband', path_param, '-DRUBBERBAND');
+        mex pitch_loop.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj -lwinmm -lWsock32
     else
         fprintf('invalid input\n');
     end
