@@ -3,39 +3,61 @@ function data = discrete_exp_recording(data)
     
     data.guess_shift = 1;
     
-    data.piano_freq = 150;
+    data.piano_freq = 0;
     
     data.voc_duration_ms = 2000;
-    
-    
-    data.n_pre_trials = 1;
-    data.n_post_trials = 1;
-    data.n_trans_trials = 1;
-    data.num_sessions = data.n_pre_trials + data.n_post_trials + data.n_trans_trials;
-    
-    data.noise_gain = 0.000;
-    data.pause_between_sessions_s = 0.7; 
-    
-    data.pitch_shift_cents = 200*sign(randn(1));
     data.std = 0;
     
-    data.pitch_levels_cents = [0 data.pitch_shift_cents];
+    data.noise_gain = 0.000;
+    data.pause_between_sessions_s = 0.7;
     
-    data.shifter_function = @vowel_shifter_rubberband;
-    data.rec_date = datetime('now');
+%%
+    
+    data.pitch_levels_cents = 3*[-100 -50 0 50 100];
+    data.num_sessions = 2;
+    
+    data.pitch_level_sqs_cents = zeros(1,data.num_sessions);
+    for i=1:data.num_sessions
+
+        lvl = ceil(length(data.pitch_levels_cents)*rand(1));
+        data.pitch_level_sqs_cents(i) = data.pitch_levels_cents(lvl);
+
+    end
+    data.pitch_level_var_sqs_cents = data.pitch_level_sqs_cents + data.std*randn(1,data.num_sessions);
+    
+    data.pitch_level_var_sqs = 2.^(data.pitch_level_var_sqs_cents/1200);
+    
+%%    
+    
+%     data.n_pre_trials = 10;
+%     data.n_post_trials = 5;
+%     data.n_trans_trials = 10;
+%     data.num_sessions = data.n_pre_trials + data.n_post_trials + data.n_trans_trials;
+%     
+%      
+%     
+%     data.pitch_shift_cents = 200*sign(randn(1));
+%     
+%     
+%     data.pitch_levels_cents = [0 data.pitch_shift_cents];
+% 
+%     inc = data.pitch_shift_cents/(data.n_trans_trials+1);
+%     data.pitch_level_sqs_cents = [zeros(1,data.n_pre_trials),(inc:inc:data.pitch_shift_cents-inc), ones(1,data.n_post_trials)*data.pitch_shift_cents];
+%     
+%     data.pitch_level_var_sqs_cents = data.pitch_level_sqs_cents + data.std*randn(1,data.num_sessions);
+%     
+%     data.pitch_level_var_sqs = 2.^(data.pitch_level_var_sqs_cents/1200);
+
+%%
     
     data.frameSize = 64;
     data.Fs = 44100;
     
+    data.shifter_function = @vowel_shifter_rubberband;
+    data.rec_date = datetime('now');
+    
     data.voc_duration_f = round(data.voc_duration_ms * data.Fs / data.frameSize / 1000);
     data.voc_duration_ms = data.voc_duration_f * data.frameSize * 1000 / data.Fs;
-    
-    inc = data.pitch_shift_cents/(data.n_trans_trials+1);
-    data.pitch_level_sqs_cents = [zeros(1,data.n_pre_trials),(inc:inc:data.pitch_shift_cents-inc), ones(1,data.n_post_trials)*data.pitch_shift_cents];
-    
-    data.pitch_level_var_sqs_cents = data.pitch_level_sqs_cents + data.std*randn(1,data.num_sessions);
-    
-    data.pitch_level_var_sqs = 2.^(data.pitch_level_var_sqs_cents/1200);
     
     for i=1:data.num_sessions
         fprintf('session %i...\n',i);

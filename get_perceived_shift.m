@@ -1,7 +1,7 @@
 function perceived_shift = get_perceived_shift(signal, init_shift)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
-    step_size = 1;
+    step_size = 5;
 
     sel_shift = init_shift;
     
