@@ -101,10 +101,10 @@ int voc_duration_f = 1380;
 bool play_ref_sound = true;
 bool ref_sound_always_on = false;
 bool mark_session_starts = true;
-bool mark_session_ends = false;
+bool mark_session_ends = true;
 int start_marker_duration_f = 0.5*sampleRate/(double)frameSize;
 int start_marker_onset_f = 30;
-int end_marker_duration_f = 0.5*sampleRate/(double)frameSize;
+int end_marker_duration_f = 1*sampleRate/(double)frameSize;
 int ref_sound_duration_f = 0.8*sampleRate/(double)frameSize;
 
 double ref_sound_freq = 125.0;
