@@ -170,7 +170,7 @@ void init(void){
           
     gen_beep_sound(600,0.1);
     gen_piano_sound(ref_sound_freq, 0.1);
-    gen_drum_sound(92.5, 0.25); //92.5: Closed HiHat; 65.4: Base Drum 1
+    gen_drum_sound(92.5, 0.1); //92.5: Closed HiHat; 65.4: Base Drum 1
 
     //init moving average
     for(int i = 0; i<mov_avg_width; ++i){
