@@ -76,7 +76,7 @@ function data = discrete_exp_recording(data)
         
         %probe trial
         data.shifter_function(1, data.pitch_level_var_sqs(i), data.voc_duration_f, data.piano_freq, 0, 0, 0, 0, 0, 0, 0, 0, 0, data.noise_gain);
-        while(data.shifter_function(0) == 0)
+        while(data.shifter_function(0) ~= 2)
             pause(0.2);
         end
         [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = data.shifter_function(-1);

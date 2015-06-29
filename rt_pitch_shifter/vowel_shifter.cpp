@@ -296,6 +296,9 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     if(voice_onset_f > -1 && i_frame == voice_onset_f+voc_duration_f+end_marker_duration_f*mark_session_ends){
         is_finished = 1;
     }
+    if(is_finished == 1 && amp < threshold){
+        is_finished = 2;
+    }
     
     static_factor_sqs[i_frame] = static_factor;
     var_factor_sqs[i_frame] = var_factor;
