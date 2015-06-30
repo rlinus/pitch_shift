@@ -66,6 +66,7 @@ double signal[data_array_length];
 
 
 double pitch_factor;
+double prev_pitch_factor = 0;
 int signal_length;
 
 
@@ -147,15 +148,22 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         }     
     #endif
     
-        
-    for (int i=0; i<frameSize; i++ ){  
-            double out = output[i];
-            
-            if(out>1.0f) out = 1.0f;
-            if(out<-1.0f) out = -1.0f;
-            *obuffer++ = out;
-            *obuffer++ = out;
+    if(prev_pitch_factor == pitch_factor){    
+        for (int i=0; i<frameSize; i++ ){  
+                double out = output[i];
+
+                if(out>1.0f) out = 1.0f;
+                if(out<-1.0f) out = -1.0f;
+                *obuffer++ = out;
+                *obuffer++ = out;
+        }
+    } else {
+        for (int i=0; i<frameSize; i++ ){  
+                *obuffer++ = 0;
+                *obuffer++ = 0;
+        }
     }
+    prev_pitch_factor = pitch_factor;
 	return 0;
 }
 

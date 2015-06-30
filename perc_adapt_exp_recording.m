@@ -2,7 +2,7 @@ function data = perc_adapt_exp_recording()
     data.subject = 'Gagan';
     
     data.ref_freq = 200;
-    data.noise_gain = 0.1;
+    data.noise_gain = 0.10;
     
     data.voc_duration_ms = 2000;
     
@@ -31,7 +31,7 @@ function data = perc_adapt_exp_recording()
     data.ref_freqs = 2.^(data.ref_shifts_cents/1200) * data.ref_freq;
     
     data.n_pre_fb_trials = 0;
-    data.n_pre_mct_trials = 1;
+    data.n_pre_mct_trials = 5;
     data.n_pre_pct_trials = 0;
     
     data.n_post_fb_trials = 0;
@@ -54,9 +54,9 @@ function data = perc_adapt_exp_recording()
         data.ref_freq_sqs(i) = data.ref_freqs(ceil(length(data.ref_freqs)*rand(1)));
     end
     
-    pre_kind = [1*ones(1,data.n_pre_fb_trials), 2*ones(1,data.n_pre_mct_trials), 3*data.n_pre_pct_trials];
+    pre_kind = [1*ones(1,data.n_pre_fb_trials), 2*ones(1,data.n_pre_mct_trials), 3*ones(1,data.n_pre_pct_trials)];
     pre_kind = pre_kind(randperm(data.n_pre_trials));
-    post_kind = [1*ones(1,data.n_post_fb_trials), 2*ones(1,data.n_post_mct_trials), 3*data.n_post_pct_trials];
+    post_kind = [1*ones(1,data.n_post_fb_trials), 2*ones(1,data.n_post_mct_trials), 3*ones(1,data.n_post_pct_trials)];
     post_kind = post_kind(randperm(data.n_post_trials));
     
     data.kind_of_trials = [pre_kind 1*ones(1,data.n_trans_trials) post_kind];

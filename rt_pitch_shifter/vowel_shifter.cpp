@@ -81,9 +81,9 @@ double static_factor_sqs[data_array_length/frameSize];
 double var_factor_sqs[data_array_length/frameSize];
 double control_factor_sqs[data_array_length/frameSize];
 
-const int mov_avg_width = 10;
+const int mov_avg_width = 100;
 
-const double threshold = 0.03;
+const double threshold = 0.01;
 int voice_onset_f;
 int shift_onset_f;
 int shift_duration_f;
@@ -106,7 +106,7 @@ bool mark_session_ends = false;
 int start_marker_duration_f = 0.5*sampleRate/(double)frameSize;
 int start_marker_onset_f = 30;
 int end_marker_duration_f = 1*sampleRate/(double)frameSize;
-int ref_sound_duration_f = 0.8*sampleRate/(double)frameSize;
+int ref_sound_duration_f = 1*sampleRate/(double)frameSize;
 
 double ref_sound_freq = 125.0;
 
@@ -168,7 +168,7 @@ void init(void){
     draw_var(true);
           
     gen_beep_sound(600,0.1);
-    gen_piano_sound(ref_sound_freq, 0.2);
+    gen_piano_sound(ref_sound_freq, 0.1);
     gen_drum_sound(92.5, 0.1); //92.5: Closed HiHat; 65.4: Base Drum 1
 
     //init moving average
@@ -295,7 +295,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     if(voice_onset_f > -1 && i_frame == voice_onset_f+voc_duration_f+end_marker_duration_f*mark_session_ends){
         is_finished = 1;
     }
-    if(is_finished == 1 && amp < threshold){
+    if(is_finished == 1 && amp < 0.2*threshold){
         is_finished = 2;
     }
     
@@ -532,7 +532,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
             double f = mxGetScalar(prhs[3]);
             if((int)f==0){
                 play_ref_sound = false;
-                mark_session_starts = true;
+                mark_session_starts = false;
                 start_marker_onset_f = 30;
             }else{
                 play_ref_sound = true;
