@@ -97,11 +97,12 @@ double static_factor;
 bool shift_after_voice_onset = false;
 
 int voc_duration_f = 1380;
+double feedback_gain = 1;
 
 bool play_ref_sound = true;
 bool ref_sound_always_on = false;
-bool mark_session_starts = true;
-bool mark_session_ends = true;
+bool mark_session_starts = false;
+bool mark_session_ends = false;
 int start_marker_duration_f = 0.5*sampleRate/(double)frameSize;
 int start_marker_onset_f = 30;
 int end_marker_duration_f = 1*sampleRate/(double)frameSize;
@@ -113,7 +114,6 @@ bool add_pink_noise = false;
 double noise_gain = 0.002f;
 const int num_noise_frames = 5000;
 double pink_noise[num_noise_frames*frameSize];
-int i_noise_frame = 0;
 
 const int beep_sound_length = 5*sampleRate;
 double beep_sound[beep_sound_length];
@@ -153,7 +153,6 @@ void init(void){
     voice_onset_f = -1;
     
     control_error_sum = 0;
-    //i_noise_frame = 0;
     
     if(shift_after_voice_onset){
         static_factor = 1.0;
@@ -169,7 +168,7 @@ void init(void){
     draw_var(true);
           
     gen_beep_sound(600,0.1);
-    gen_piano_sound(ref_sound_freq, 0.1);
+    gen_piano_sound(ref_sound_freq, 0.2);
     gen_drum_sound(92.5, 0.1); //92.5: Closed HiHat; 65.4: Base Drum 1
 
     //init moving average
@@ -352,8 +351,10 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     
         
     for (int i=0; i<frameSize; i++ ){  
-            double out = output_signal[i_frame*frameSize+i];
-            if(add_pink_noise) out += pink_noise[(i_noise_frame%num_noise_frames)*frameSize+i];
+            double out = feedback_gain*output_signal[i_frame*frameSize+i];
+            if(add_pink_noise && (!play_ref_sound || i_frame > ref_sound_duration_f)){
+                out += pink_noise[(i_frame%num_noise_frames)*frameSize+i];
+            }
             if(play_ref_sound && (i_frame < ref_sound_duration_f || ref_sound_always_on)){
                 out += (double) piano_sound[((i_frame)*frameSize+i)%piano_sound_length];
             }
@@ -369,7 +370,6 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
             *obuffer++ = out;
             *obuffer++ = out;
     }
-    ++i_noise_frame;
 	return 0;
 }
 
@@ -613,6 +613,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 add_pink_noise = false;
             }
             
+            if(nrhs >= 15 && !(!mxIsDouble(prhs[14]) || mxIsComplex(prhs[14]) || mxGetNumberOfElements(prhs[14])!=1)) {
+                feedback_gain = mxGetScalar(prhs[14]);
+            } else {
+                feedback_gain =1;
+            }
+            
             
             
             //get noise
@@ -687,10 +693,10 @@ void gen_piano_sound(double f, double amp){
         Instrmnt *instrument = new Rhodey();
         //Instrmnt *instrument = new BeeThree();  //causes unknown exception sometimes (but never after compiling
         //Instrmnt *instrument = new Wurley();
-        instrument->noteOn(f, amp);
+        instrument->noteOn(f, 0.2);
 
         for(int i = 0; i < piano_sound_length; ++i){
-            piano_sound[i] = (double) instrument->tick();
+            piano_sound[i] = (amp/0.2)*(double) instrument->tick();
         }
 
         delete instrument;

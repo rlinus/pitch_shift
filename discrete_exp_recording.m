@@ -1,4 +1,4 @@
-function data = discrete_exp_recording(data)
+function data = discrete_exp_recording()
     data.subject = 'Richard';
     
     data.guess_shift = 1;
@@ -8,7 +8,7 @@ function data = discrete_exp_recording(data)
     data.voc_duration_ms = 2000;
     data.std = 0;
     
-    data.noise_gain = 0.000;
+    data.noise_gain = 0.00;
     data.pause_between_sessions_s = 0.7;
     
 % %%
@@ -33,9 +33,9 @@ function data = discrete_exp_recording(data)
     
 %    
     
-    data.n_pre_trials = 12;
-    data.n_post_trials = 8;
-    data.n_trans_trials = 12;
+    data.n_pre_trials = 1;
+    data.n_post_trials = 0;
+    data.n_trans_trials = 0;
     data.num_sessions = data.n_pre_trials + data.n_post_trials + data.n_trans_trials;
     
      

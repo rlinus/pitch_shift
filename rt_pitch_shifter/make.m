@@ -1,10 +1,15 @@
 function make(varargin)
-    %RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
-    RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    RAWWAVEPATH = 'C:/Users/Linus/Documents/MATLAB/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
+    %RAWWAVEPATH = 'E:/Data/Linus/GitHub/pitch_shift/rt_pitch_shifter/stk-4.5.0/rawwaves/';
     
     currentFolder = pwd;
     cd(fileparts(which(mfilename)));
-    cd('bin');
+    mfilefolder = pwd;
+    
+    cd('../rt_pitch_shifter/stk-4.5.0/rawwaves/');
+    RAWWAVEPATH = strrep([pwd '\'],'\', '/');
+    
+    cd([mfilefolder '/bin']);
     
     if isempty(varargin{1}) || ~ischar(varargin{1})
         fprintf('specify target');
