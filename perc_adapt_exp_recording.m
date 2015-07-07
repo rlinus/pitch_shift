@@ -1,14 +1,14 @@
 function data = perc_adapt_exp_recording()
-    data.subject = 'Gagan';
+    data.subject = 'Richard';
     
     data.ref_freq = 200;
-    data.noise_gain = 0.10;
+    data.noise_gain = 0.01;
     
     data.voc_duration_ms = 2000;
     
-    data.condition = 1;
+    data.condition = 2;
     
-    data.pitch_shift_cents = 300*sign(randn(1));
+    data.pitch_shift_cents = -300;%*sign(randn(1));
     
     data.var_pitch_shift_cents = [-100 -50 -25 0 25 50 100];
     
@@ -30,15 +30,15 @@ function data = perc_adapt_exp_recording()
     data.ref_shifts_cents = [-150 -50 50 150];
     data.ref_freqs = 2.^(data.ref_shifts_cents/1200) * data.ref_freq;
     
-    data.n_pre_fb_trials = 0;
-    data.n_pre_mct_trials = 5;
-    data.n_pre_pct_trials = 0;
+    data.n_pre_fb_trials = 10;
+    data.n_pre_mct_trials = 10;
+    data.n_pre_pct_trials = 10;
     
-    data.n_post_fb_trials = 0;
-    data.n_post_mct_trials = 0;
-    data.n_post_pct_trials = 0;
+    data.n_post_fb_trials = 20; 
+    data.n_post_mct_trials = 10;
+    data.n_post_pct_trials = 10;
     
-    data.n_trans_trials = 0;
+    data.n_trans_trials = 5;
     
     data.n_pre_trials = data.n_pre_fb_trials + data.n_pre_mct_trials + data.n_pre_pct_trials;
     data.n_post_trials = data.n_post_fb_trials + data.n_post_mct_trials + data.n_post_pct_trials;
@@ -117,8 +117,8 @@ function data = perc_adapt_exp_recording()
        data.voice_onset_ms(i) = data.voice_onset_f(i) * data.frameSize * 1000 / data.Fs;
        
        d = data.y_r{i}(data.voice_onset_f(i) * data.frameSize+0.2*data.Fs:(data.voice_onset_f(i)+data.voc_duration_f) * data.frameSize-0.1*data.Fs);
-       data.perceived_produced_pitch(i) = get_perceived_shift(d,data.startShift(i));
-       %data.perceived_produced_pitch(i) = get_perceived_shift(d,data.pitch_level_var_sqs_cents(i));
+       %data.perceived_produced_pitch(i) = get_perceived_shift(d,data.startShift(i));
+       data.perceived_produced_pitch(i) = get_perceived_shift(d,data.pitch_level_var_sqs_cents(i));
     end
     
     delete(gui);
