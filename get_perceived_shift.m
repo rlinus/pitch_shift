@@ -1,4 +1,4 @@
-function perceived_shift = get_perceived_shift(signal, init_shift)
+function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shift)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
     step_size = 10;
@@ -8,7 +8,7 @@ function perceived_shift = get_perceived_shift(signal, init_shift)
     pitch_loop(1,signal);
     pitch_loop(0,2^(sel_shift/1200));
 
-
+    invalid_trial=0;
 
     ui = figure;
 
@@ -29,8 +29,13 @@ function perceived_shift = get_perceived_shift(signal, init_shift)
 
     btn = uicontrol('Style', 'pushbutton', 'String', 'OK',...
         'Units', 'normalized',...
-        'Position', [0.4 0.1 0.2 0.1],...
+        'Position', [0.55 0.1 0.2 0.1],...
         'Callback', @ok_clb);
+    
+    btn = uicontrol('Style', 'pushbutton', 'String', 'Invalid Trial',...
+        'Units', 'normalized',...
+        'Position', [0.25 0.1 0.2 0.1],...
+        'Callback', @invalid_clb);
 
 
     uiwait(ui);
@@ -46,6 +51,12 @@ function perceived_shift = get_perceived_shift(signal, init_shift)
     end
 
     function ok_clb(src,callbackdata)
+        uiresume(ui);
+        close(ui);
+    end
+
+    function invalid_clb(src,callbackdata)
+        invalid_trial = 1;
         uiresume(ui);
         close(ui);
     end

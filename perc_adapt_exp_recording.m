@@ -2,9 +2,11 @@ function data = perc_adapt_exp_recording()
     data.subject = 'Richard';
     
     data.ref_freq = 200;
-    data.noise_gain = 0.01;
+    data.noise_gain = 0.5;
     
-    data.voc_duration_ms = 2000;
+    data.voc_duration_ms = 2*2000;
+    
+    data.random_start_shift = true;
     
     data.condition = 2;
     
@@ -30,15 +32,15 @@ function data = perc_adapt_exp_recording()
     data.ref_shifts_cents = [-150 -50 50 150];
     data.ref_freqs = 2.^(data.ref_shifts_cents/1200) * data.ref_freq;
     
-    data.n_pre_fb_trials = 10;
-    data.n_pre_mct_trials = 10;
-    data.n_pre_pct_trials = 10;
+    data.n_pre_fb_trials = 0;
+    data.n_pre_mct_trials = 0;
+    data.n_pre_pct_trials = 1;
     
-    data.n_post_fb_trials = 20; 
-    data.n_post_mct_trials = 10;
-    data.n_post_pct_trials = 10;
+    data.n_post_fb_trials = 0; 
+    data.n_post_mct_trials = 0;
+    data.n_post_pct_trials = 0;
     
-    data.n_trans_trials = 5;
+    data.n_trans_trials = 0;
     
     data.n_pre_trials = data.n_pre_fb_trials + data.n_pre_mct_trials + data.n_pre_pct_trials;
     data.n_post_trials = data.n_post_fb_trials + data.n_post_mct_trials + data.n_post_pct_trials;
@@ -47,7 +49,9 @@ function data = perc_adapt_exp_recording()
     inc = data.pitch_shift_cents/(data.n_trans_trials+1);
     data.pitch_level_sqs_cents = [zeros(1,data.n_pre_trials),(inc:inc:data.pitch_shift_cents-inc), ones(1,data.n_post_trials)*data.pitch_shift_cents];
     
-    data.startShift = (2*rand(1,data.n_trials)-1)*600;
+    if data.random_start_shift
+        data.startShift = (2*rand(1,data.n_trials)-1)*600;
+    end
     
     for i=1:data.n_trials
         data.pitch_level_var_sqs_cents(i) = data.pitch_level_sqs_cents(i) + data.var_mult * data.var_pitch_shift_cents(ceil(length(data.var_pitch_shift_cents)*rand(1)));
@@ -62,6 +66,8 @@ function data = perc_adapt_exp_recording()
     data.kind_of_trials = [pre_kind 1*ones(1,data.n_trans_trials) post_kind];
     
     data.pitch_level_var_sqs = 2.^(data.pitch_level_var_sqs_cents/1200);
+    
+    data.invalid_trials = zeros(data.n_trials,1);
     
     data.frameSize = 64;
     data.Fs = 44100;
@@ -113,12 +119,16 @@ function data = perc_adapt_exp_recording()
                 pause(0.2);
             end
         end
-       [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),~, ~, ~,data.detected_pitch{i}] = data.shifter_function(-1);
-       data.voice_onset_ms(i) = data.voice_onset_f(i) * data.frameSize * 1000 / data.Fs;
+        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),~, ~, ~,data.detected_pitch{i}] = data.shifter_function(-1);
+        data.voice_onset_ms(i) = data.voice_onset_f(i) * data.frameSize * 1000 / data.Fs;
        
-       d = data.y_r{i}(data.voice_onset_f(i) * data.frameSize+0.2*data.Fs:(data.voice_onset_f(i)+data.voc_duration_f) * data.frameSize-0.1*data.Fs);
-       %data.perceived_produced_pitch(i) = get_perceived_shift(d,data.startShift(i));
-       data.perceived_produced_pitch(i) = get_perceived_shift(d,data.pitch_level_var_sqs_cents(i));
+        d = data.y_r{i}(data.voice_onset_f(i) * data.frameSize+0.2*data.Fs:(data.voice_onset_f(i)+data.voc_duration_f) * data.frameSize-0.1*data.Fs);
+       
+        if random_start_shift
+            [data.perceived_produced_pitch(i),data.invalid_trials(i)] = get_perceived_shift(d,data.startShift(i));
+        else
+            [data.perceived_produced_pitch(i),data.invalid_trials(i)] = get_perceived_shift(d,data.pitch_level_var_sqs_cents(i));
+        end
     end
     
     delete(gui);

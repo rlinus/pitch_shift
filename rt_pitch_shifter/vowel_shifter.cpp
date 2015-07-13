@@ -11,6 +11,7 @@
 #include "BeeThree.h"
 #include "Drummer.h"
 #include "dywapitchtrack.h"
+#include <minmax.h>
 
 
 
@@ -36,6 +37,7 @@ using namespace stk;
 
 double frameAmplitude(double *samples);
 double mov_avg(double e);
+double sig_power(void);
 void gen_beep_sound(double f, double amp);
 void gen_piano_sound(double f, double amp);
 void gen_drum_sound(double f, double amp);
@@ -82,8 +84,11 @@ double var_factor_sqs[data_array_length/frameSize];
 double control_factor_sqs[data_array_length/frameSize];
 
 const int mov_avg_width = 100;
+const int sig_power_width = 30;
 
-const double threshold = 0.01;
+const double min_noise_level = 0.05;
+
+const double threshold = 0.1;//0.01;
 int voice_onset_f;
 int shift_onset_f;
 int shift_duration_f;
@@ -207,8 +212,8 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
 	double *ibuffer = (double *) inputBuffer;
 	double *obuffer = (double *) outputBuffer;
     
-    
-    double amp = mov_avg(frameAmplitude(ibuffer));
+    double frame_amp = frameAmplitude(ibuffer);
+    double amp = mov_avg(frame_amp);
     
     //ibuffer = &beep_sound[i_frame*frameSize];
     
@@ -353,7 +358,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     for (int i=0; i<frameSize; i++ ){  
             double out = feedback_gain*output_signal[i_frame*frameSize+i];
             if(add_pink_noise && (!play_ref_sound || i_frame > ref_sound_duration_f)){
-                out += pink_noise[(i_frame%num_noise_frames)*frameSize+i];
+                out += pink_noise[(i_frame%num_noise_frames)*frameSize+i]*max(sig_power(),min_noise_level);
             }
             if(play_ref_sound && (i_frame < ref_sound_duration_f || ref_sound_always_on)){
                 out += (double) piano_sound[((i_frame)*frameSize+i)%piano_sound_length];
@@ -678,6 +683,19 @@ double mov_avg(double e){
         sum += b[i];
     }
     return sum/mov_avg_width;
+}
+
+double sig_power(void){
+    if(i_frame < sig_power_width) return 0;
+    
+    double * ptr = &input_signal[(i_frame+1-sig_power_width)*frameSize];
+    
+    double sum = 0;
+    for(int i=0; i<=sig_power_width*frameSize; ++i){
+        sum += ptr[i]*ptr[i];
+    }
+    
+    return sum/(sig_power_width*frameSize);
 }
 
 void gen_beep_sound(double f, double amp){
