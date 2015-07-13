@@ -2,7 +2,7 @@ function data = perc_adapt_exp_recording()
     data.subject = 'Richard';
     
     data.ref_freq = 200;
-    data.noise_gain = 0.5;
+    data.noise_gain = 10;
     
     data.voc_duration_ms = 2*2000;
     
@@ -124,7 +124,7 @@ function data = perc_adapt_exp_recording()
        
         d = data.y_r{i}(data.voice_onset_f(i) * data.frameSize+0.2*data.Fs:(data.voice_onset_f(i)+data.voc_duration_f) * data.frameSize-0.1*data.Fs);
        
-        if random_start_shift
+        if data.random_start_shift
             [data.perceived_produced_pitch(i),data.invalid_trials(i)] = get_perceived_shift(d,data.startShift(i));
         else
             [data.perceived_produced_pitch(i),data.invalid_trials(i)] = get_perceived_shift(d,data.pitch_level_var_sqs_cents(i));

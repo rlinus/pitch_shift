@@ -86,9 +86,9 @@ double control_factor_sqs[data_array_length/frameSize];
 const int mov_avg_width = 100;
 const int sig_power_width = 30;
 
-const double min_noise_level = 0.05;
+const double min_noise_level = 0.005;
 
-const double threshold = 0.1;//0.01;
+const double threshold = 0.01;
 int voice_onset_f;
 int shift_onset_f;
 int shift_duration_f;
