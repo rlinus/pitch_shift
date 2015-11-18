@@ -2,13 +2,13 @@ function data = perc_adapt_exp_recording()
     data.subject = 'Richard';
     
     data.ref_freq = 200;
-    data.noise_gain = 10;
+    data.noise_gain = 0;
     
     data.voc_duration_ms = 2*2000;
     
     data.random_start_shift = true;
     
-    data.condition = 2;
+    data.condition = 1;
     
     data.pitch_shift_cents = -300;%*sign(randn(1));
     

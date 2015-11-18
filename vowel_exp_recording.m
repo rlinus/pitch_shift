@@ -1,8 +1,8 @@
-function data = vowel_exp_recording
-    data.subject = 'Linus';
-    data.piano_freq = 150;
+function [data,params] = vowel_exp_recording
+    data.subject = 'Linus2';
+    data.piano_freq = 200;
     save_data = true;
-    dir = 'E:\Data\Linus\MATLAB\rec_vowel_exp_data\';
+    dir = 'C:\Users\Linus\Documents\MATLAB\test_rec\';
     
     data.condition = 1;
     
@@ -11,15 +11,15 @@ function data = vowel_exp_recording
         case 1
             data.condition_name = 'test';
             save_data = false;
-            data.mode = 1; %1:shift before voice onset, 2: shift after voice onset
+            data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
             data.pitch_levels_cents = 200;
             data.num_sessions = 1;
-            data.shift_duration_ms = 3*400;
+            data.shift_duration_ms = 1000;
             data.voc_duration_ms = 3000;
             data.shift_onset_interval_ms = 2*[500 500];
             
             data.do_var = 0;
-            data.do_var_whole_session = 1;
+            data.do_var_whole_session = 0;
             data.std_dev = 100;
             data.fc = 0.05*2;
 
@@ -27,10 +27,10 @@ function data = vowel_exp_recording
             data.kp  = 0;
             data.ki = 0;
             
-            data.noise_gain = 0.05;
+            data.noise_gain = 0.0;
             
             data.pause_between_sessions_s = 0.7;  
-            data.play_ref_whole_session = 1; %1: no, -1: yes
+            data.play_ref_whole_session = -1; %1: no, -1: yes
         case 2
             data.condition_name = 'const_shift';
             
@@ -177,7 +177,6 @@ function data = vowel_exp_recording
             return;
     end
     
-    data.shifter_function = @vowel_shifter_rubberband;
     data.rec_date = datetime('now');
     
     data.frameSize = 64;
@@ -202,17 +201,40 @@ function data = vowel_exp_recording
     data.shift_onset_ms = data.shift_onset_f * data.frameSize * 1000 / data.Fs;
     data.shift_duration_ms = data.shift_duration_f * data.frameSize * 1000 / data.Fs;
     data.voc_duration_ms = data.voc_duration_f * data.frameSize * 1000 / data.Fs;
+    
+    params.shifterId = 0;
+    params.deviceId = 0;
+    params.shift_after_voice_onset = data.mode==2;
+    params.voc_duration = data.voc_duration_ms/1000;
+    params.shift_duration = data.shift_duration_ms/1000;
+    params.play_ref_sound = 1;
+    params.ref_freq = data.piano_freq;
+    params.ref_amplitude = 0.1;
+    params.add_pink_noise = data.noise_gain ~=0;
+    params.noise_gain = data.noise_gain;
+    params.do_var = data.do_var;
+    params.do_var_whole_session = data.do_var_whole_session;
+    params.std_dev = data.std_dev;
+    params.fc = data.fc;
+    params.do_control = data.do_control;
+    params.ki = data.ki;
+    params.kp = data.kp;
+    params.feedback_gain = 1;
+    
 
     for i=1:data.num_sessions
         fprintf('session %i...\n',i);
-        data.shifter_function(data.mode, data.pitch_level_sqs(i), data.voc_duration_f, data.play_ref_whole_session*data.piano_freq, data.shift_onset_f(i), data.shift_duration_f, data.do_var, data.std_dev, data.fc, data.do_control, data.kp, data.ki, data.do_var_whole_session, data.noise_gain);
-        while(data.shifter_function(0) == 0)
+        params.shift_onset = data.shift_onset_ms(i)/1000;
+        params.pitch_factor = data.pitch_level_sqs(i);
+        pitch_shifter(1, params);
+        while(pitch_shifter(0) == 0)
             pause(0.2);
         end
-        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = data.shifter_function(-1);
+        [data.y_r{i}, data.y_ps{i}, data.voice_onset_s(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = pitch_shifter(-1);
         pause(data.pause_between_sessions_s);
     end
-    data.voice_onset_ms = data.voice_onset_f * data.frameSize * 1000 / data.Fs;
+    data.voice_onset_f = round(data.voice_onset_s * data.Fs / data.frameSize);
+    data.voice_onset_ms = data.voice_onset_s * 1000;
     
     if save_data
         [~,M,D] = datevec(data.rec_date);
@@ -228,5 +250,4 @@ function data = vowel_exp_recording
             save(filename,'data');
         end
     end
-
 end

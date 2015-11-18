@@ -5,8 +5,7 @@ function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shi
 
     sel_shift = init_shift;
     
-    pitch_loop(1,signal);
-    pitch_loop(0,2^(sel_shift/1200));
+    pitch_loop(1,signal,2^(sel_shift/1200),2,0);
 
     invalid_trial=0;
 
