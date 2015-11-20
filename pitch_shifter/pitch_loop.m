@@ -1,5 +1,4 @@
-function pitch_loop(mode, signal, pitch_factor, shifterId, deviceId)
-%pitch_loop plays pitch shifted audio signal in endless loop
+%PITCH_LOOP plays pitch shifted audio signal in endless loop
 %   pitch_loop(1, signal, pitch_factor, shifterId, deviceId):
 %       starts the playback of the pitch shifted signal in an endless loop
 %
@@ -20,5 +19,4 @@ function pitch_loop(mode, signal, pitch_factor, shifterId, deviceId)
 %   pitch_loop(-1):
 %       stops the playback
 
-end
 

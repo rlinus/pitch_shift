@@ -19,7 +19,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = 2*[500 500];
             
             data.do_var = 0;
-            data.do_var_whole_session = 0;
+            data.do_var_full_session = 0;
             data.std_dev = 100;
             data.fc = 0.05*2;
 
@@ -42,7 +42,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = [500 900];
             
             data.do_var = 0;
-            data.do_var_whole_session = 0;
+            data.do_var_full_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
@@ -65,7 +65,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = [500 900];
             
             data.do_var = 1;
-            data.do_var_whole_session = 0;
+            data.do_var_full_session = 0;
             data.std_dev = 100;
             data.fc = 0.01;
 
@@ -88,7 +88,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = [4000 4000];
             
             data.do_var = 0;
-            data.do_var_whole_session = 0;
+            data.do_var_full_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
@@ -111,7 +111,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = [4000 4000];
             
             data.do_var = 0;
-            data.do_var_whole_session = 0;
+            data.do_var_full_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
@@ -134,7 +134,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = [500 900];
             
             data.do_var = 0;
-            data.do_var_whole_session = 0;
+            data.do_var_full_session = 0;
             data.std_dev = 0;
             data.fc = 0;
 
@@ -157,7 +157,7 @@ function [data,params] = vowel_exp_recording
             data.shift_onset_interval_ms = [500 900];
             
             data.do_var = 1;
-            data.do_var_whole_session = 2;
+            data.do_var_full_session = 2;
             data.std_dev = 200;
             data.fc = 0.05;
             
@@ -204,7 +204,7 @@ function [data,params] = vowel_exp_recording
     
     params.shifterId = 0;
     params.deviceId = 0;
-    params.shift_after_voice_onset = data.mode==2;
+    params.shift_full_trial = data.mode==1;
     params.voc_duration = data.voc_duration_ms/1000;
     params.shift_duration = data.shift_duration_ms/1000;
     params.play_ref_sound = 1;
@@ -213,7 +213,7 @@ function [data,params] = vowel_exp_recording
     params.add_pink_noise = data.noise_gain ~=0;
     params.noise_gain = data.noise_gain;
     params.do_var = data.do_var;
-    params.do_var_whole_session = data.do_var_whole_session;
+    params.do_var_full_trial = data.do_var_full_session;
     params.std_dev = data.std_dev;
     params.fc = data.fc;
     params.do_control = data.do_control;

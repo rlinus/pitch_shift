@@ -151,7 +151,7 @@ double control_error_sum = 0;
 
 void init(void){
     Stk::setSampleRate(sampleRate);
-    Stk::setRawwavePath(get_mex_path()+"../stk-4.5.0/rawwaves/");
+    Stk::setRawwavePath(get_mex_path()+"rawwaves/");
     //mexPrintf("%s\n",(get_mex_path()+"../stk-4.5.0/rawwaves/").c_str());
     
     i_frame = -1;
@@ -175,8 +175,8 @@ void init(void){
     draw_var(true);
           
     if(play_ref_sound && !custom_ref_sound) gen_piano_sound(ref_sound_freq,ref_sound_amplitude);
-    gen_beep_sound(600,0.1);
-    gen_drum_sound(92.5, 0.2); //92.5: Closed HiHat; 65.4: Base Drum 1
+    //gen_beep_sound(600,0.1);
+    //gen_drum_sound(92.5, 0.2); //92.5: Closed HiHat; 65.4: Base Drum 1
 
     //init moving average
     for(int i = 0; i<mov_avg_width; ++i){
@@ -525,11 +525,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
             //get input parameters
             mxArray * fieldptr;
             
-            fieldptr = mxGetField(prhs[1], 0, "shift_after_voice_onset");
+            fieldptr = mxGetField(prhs[1], 0, "shift_full_trial");
             if(fieldptr){
-                shift_after_voice_onset = (bool) mxGetScalar(fieldptr);
+                shift_after_voice_onset = !(bool)mxGetScalar(fieldptr);
             }else {
-                shift_after_voice_onset = 0;
+                shift_after_voice_onset = 1;
             }
             
             fieldptr = mxGetField(prhs[1], 0, "pitch_factor");
@@ -649,7 +649,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 var_quant_size = 0;
             }
             
-            fieldptr = mxGetField(prhs[1], 0, "do_var_whole_session");
+            fieldptr = mxGetField(prhs[1], 0, "do_var_full_trial");
             if(fieldptr){
                 do_var_whole_session = bool(mxGetScalar(fieldptr));
             }else{

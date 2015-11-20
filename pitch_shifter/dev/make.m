@@ -7,6 +7,7 @@ function make(varargin)
     cd(fileparts(which(mfilename)));
     mfilefolder = pwd;
     
+    if ~exist('bin','dir'), mkdir('bin'); end;
     cd([mfilefolder '/bin']);
     
     if isempty(varargin{1}) || ~ischar(varargin{1})
