@@ -1,5 +1,5 @@
-%PITCH_LOOP plays pitch shifted audio signal in endless loop
-%   pitch_loop(1, signal, pitch_factor, shifterId, deviceId):
+%PITCHLOOP plays a pitch shifted audio signal in a endless loop
+%   PitchLoop(1, signal, pitch_factor, shifterId, deviceId):
 %       starts the playback of the pitch shifted signal in an endless loop
 %
 %       signal:         the audio signal in vector form. The dynamic  
@@ -10,13 +10,13 @@
 %                           1 = cpvPitchShift
 %                           2 = rubberband
 %       deviceId:       Determines the output audio device. Use
-%                       print_device_list to get a list of possible IDs.
+%                       PrintDeviceList to get a list of possible IDs.
 %                       Only ASIO devices are supported. [default: 0]
 %                       
-%   pitch_loop(0, pitch_factor):
+%   PitchLoop(0, pitch_factor):
 %       changes the pitch_factor
 %
-%   pitch_loop(-1):
+%   PitchLoop(-1):
 %       stops the playback
 
 

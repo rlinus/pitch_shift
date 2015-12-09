@@ -1,4 +1,3 @@
-
 #include "cpvPitchShift.h"
 #include <string.h>
 #include <math.h>
@@ -18,7 +17,7 @@ struct cpvStruct{
     double sphase[MAX_FRAME_LENGTH/2+1];
     double gOutputAccum[4*MAX_FRAME_LENGTH];
 
-    double freqPerBin, expct;
+    double expct;
     long inFifoLatency, fftFrameSize2;
 
     long stepSize;
@@ -37,16 +36,15 @@ cpvStruct cpvData;
 // -----------------------------------------------------------------------------------------------------------------
 void interpft(int ny);
 
-void cpvPitchShiftInit(long stepSize_i, long osamp_i, double sampleRate_i){
+void cpvPitchShiftInit(long stepSize_i, long fftFrameSize_i, double sampleRate_i){
     cpvData.firsttime = true;
     
     cpvData.stepSize = stepSize_i;
-    cpvData.osamp = osamp_i;
+    cpvData.osamp = fftFrameSize_i/stepSize_i;
     cpvData.sampleRate = sampleRate_i;
     
-    cpvData.fftFrameSize = cpvData.stepSize*cpvData.osamp;
+    cpvData.fftFrameSize = fftFrameSize_i;
 	cpvData.fftFrameSize2 = cpvData.fftFrameSize/2;
-	cpvData.freqPerBin = cpvData.sampleRate/(double)cpvData.fftFrameSize;
 	cpvData.expct = 2.*M_PI*(double)cpvData.stepSize/(double)cpvData.fftFrameSize;
 	cpvData.inFifoLatency = cpvData.fftFrameSize-cpvData.stepSize;
     
@@ -174,6 +172,7 @@ void cpvPitchShift(double pitchShift, double *indata, double *outdata)
     return;
 }
 
+// interpolation function (c translation of matlabs interpft)
 void interpft(int ny){
     if(ny==0) return;
     

@@ -20,11 +20,11 @@ for i=1:T_f
 %     cents = -1*floor(i/100);
 %     pitchShift=2^(cents/1200);
 %pitchShift = 0.9+floor(i/100)*0.01;
-    if i==500,pitchShift=2^(500/1200);end;
+    if i==500,pitchShift=2^(000/1200);end;
     if i==1000,pitchShift=2^(-500/1200);end;
-    if i==1500,pitchShift=2^(0/1200);end;
+    if i==1500,pitchShift=2^(500/1200);end;
     %[outdata(1+(i-1)*frameSize:i*frameSize),windowed_frame(i,:)] = smbPitchShift(pitchShift,sig(1+(i-1)*frameSize:i*frameSize),i==1);
-    [outdata(1+(i-1)*frameSize:i*frameSize),windowed_frame(i,:)] = pV(pitchShift,sig(1+(i-1)*frameSize:i*frameSize),i==1);
+    [outdata(1+(i-1)*frameSize:i*frameSize),windowed_frame(i,:)] = cpvPitchShift(pitchShift,sig(1+(i-1)*frameSize:i*frameSize),i==1);
 end
 
 t=1:length(sig);

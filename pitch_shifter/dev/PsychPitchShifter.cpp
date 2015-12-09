@@ -67,6 +67,8 @@ double output[frameSize];
 double *output_p = output;
 int i_frame;
 
+int windowSize = 1024;
+
 const size_t data_array_length = 120*sampleRate;
 double input_signal[data_array_length];
 double output_signal[data_array_length];
@@ -142,6 +144,7 @@ default_random_engine generator;
 normal_distribution<double> distribution_pitch_var(0.0,std_dev);
 
 bool do_control = false;
+double control_ref_freq = 200;
 double kp = 0;
 double ki = 0.5;
 int control_delay_f = 0.1*sampleRate/(double)frameSize;
@@ -187,10 +190,10 @@ void init(void){
     
     switch(shifterId){
         case 0:
-            smbPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+            smbPitchShiftInit(frameSize, windowSize, sampleRate);
             break;
         case 1:
-            cpvPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+            cpvPitchShiftInit(frameSize, windowSize, sampleRate);
             break;
         #if defined RUBBERBAND
         case 2:
@@ -286,7 +289,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
     
     if(do_control && voice_onset_f!=-1 && i_frame > voice_onset_f+control_delay_f && (!shift_after_voice_onset || i_frame - voice_onset_f < shift_onset_f + shift_duration_f)){
         if(estimated_pitch[i_frame]>0){
-            control_error = 1200*log2(estimated_pitch[i_frame]/ref_sound_freq*static_factor);
+            control_error = 1200*log2(estimated_pitch[i_frame]/control_ref_freq);
         } else{
             control_error = 0;
         }
@@ -567,6 +570,14 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 play_ref_sound = 0;
             }
             
+            fieldptr = mxGetField(prhs[1], 0, "ref_freq");
+            if(fieldptr){
+                ref_sound_freq = mxGetScalar(fieldptr);
+                if(ref_sound_freq<0) ref_sound_freq=0;
+            }else{
+                ref_sound_freq = 200;
+            }
+            
             
             
             fieldptr = mxGetField(prhs[1], 0, "ref_signal");
@@ -582,14 +593,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 
             }else{
                 custom_ref_sound = false;
-                
-                fieldptr = mxGetField(prhs[1], 0, "ref_freq");
-                if(fieldptr){
-                    ref_sound_freq = mxGetScalar(fieldptr);
-                    if(ref_sound_freq<0) ref_sound_freq=0;
-                }else{
-                    ref_sound_freq = 200;
-                }
                 
                 fieldptr = mxGetField(prhs[1], 0, "ref_duration");
                 if(fieldptr){
@@ -663,6 +666,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 do_control = false;
             }
             
+            fieldptr = mxGetField(prhs[1], 0, "control_ref_freq");
+            if(fieldptr){
+                control_ref_freq = mxGetScalar(fieldptr);
+            }else{
+                control_ref_freq = ref_sound_freq;
+            }
+            
             fieldptr = mxGetField(prhs[1], 0, "kp");
             if(fieldptr){
                 kp = int(mxGetScalar(fieldptr));
@@ -694,7 +704,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 add_pink_noise = false;
             }
             
-            fieldptr = mxGetField(prhs[1], 0, "adaptive_noise_level");
+            fieldptr = mxGetField(prhs[1], 0, "adaptive_noise_lvl");
             if(fieldptr){
                 adaptive_noise_level = bool(mxGetScalar(fieldptr));
             }else{
@@ -709,7 +719,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 noise_gain = 0.005;
             }
 
-            fieldptr = mxGetField(prhs[1], 0, "min_noise_level");
+            fieldptr = mxGetField(prhs[1], 0, "min_noise_lvl");
             if(fieldptr){
                 min_noise_level = double(mxGetScalar(fieldptr))/noise_gain;
                 if(min_noise_level<0) min_noise_level=0;
@@ -717,7 +727,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 min_noise_level = 0.005/noise_gain;
             }
             
-            fieldptr = mxGetField(prhs[1], 0, "max_noise_level");
+            fieldptr = mxGetField(prhs[1], 0, "max_noise_lvl");
             if(fieldptr){
                 max_noise_level = double(mxGetScalar(fieldptr))/noise_gain;
                 if(max_noise_level<min_noise_level) max_noise_level=min_noise_level;
@@ -756,6 +766,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 if(shifterId>2) shifterId=2;
             }else{
                 shifterId = 0;
+            }
+            
+            fieldptr = mxGetField(prhs[1], 0, "windowSize");
+            if(fieldptr){
+                int tid = int(mxGetScalar(fieldptr));
+                if(tid == 0) {
+                    windowSize = 512;
+                } else if(tid == 2) {
+                    windowSize = 2048;
+                } else {
+                    windowSize = 1024;
+                }
+            }else{
+                windowSize = 1024;
             }
             
             //get noise

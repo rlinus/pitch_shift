@@ -226,11 +226,12 @@ function [data,params] = vowel_exp_recording
         fprintf('session %i...\n',i);
         params.shift_onset = data.shift_onset_ms(i)/1000;
         params.pitch_factor = data.pitch_level_sqs(i);
+        params.control_ref_freq = params.ref_freq / data.pitch_level_sqs(i);
         pitch_shifter(1, params);
         while(pitch_shifter(0) == 0)
             pause(0.2);
         end
-        [data.y_r{i}, data.y_ps{i}, data.voice_onset_s(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = pitch_shifter(-1);
+        [data.y_r{i}, data.y_ps{i}, data.voice_onset_s(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = PsychPitchShifter(-1);
         pause(data.pause_between_sessions_s);
     end
     data.voice_onset_f = round(data.voice_onset_s * data.Fs / data.frameSize);

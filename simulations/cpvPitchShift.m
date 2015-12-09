@@ -1,4 +1,7 @@
-function [outdata,windowed_frame] = pV(pitchShift,input,init)
+function [outdata,windowed_frame] = cpvPitchShift(pitchShift,input,init)
+    %this is a translation of cpvPitchShift.cpp to MATLAB code for
+    %simulation purposes
+
     if nargin < 3, init=false; end;
     
     fftFrameSize = 1024;
