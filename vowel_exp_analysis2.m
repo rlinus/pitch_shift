@@ -1,4 +1,6 @@
 function data = vowel_exp_analysis2(data)
+    % vowel_exp_analysis2 does pitch detection with the wavePitchOL
+    % algorithm
     data.max_pitch_change = 10; %[Hz/ms]
     data.min_duration_of_voiced_regions = 20; %[ms]
     data.frame_length_f = 1024;

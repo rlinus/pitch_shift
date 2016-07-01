@@ -12,7 +12,7 @@ function [data,params] = vowel_exp_recording
             data.condition_name = 'test';
             save_data = false;
             data.mode = 2; %1:shift before voice onset, 2: shift after voice onset
-            data.pitch_levels_cents = 200;
+            data.pitch_levels_cents = 100;
             data.num_sessions = 1;
             data.shift_duration_ms = 1000;
             data.voc_duration_ms = 3000;
@@ -202,7 +202,7 @@ function [data,params] = vowel_exp_recording
     data.shift_duration_ms = data.shift_duration_f * data.frameSize * 1000 / data.Fs;
     data.voc_duration_ms = data.voc_duration_f * data.frameSize * 1000 / data.Fs;
     
-    params.shifterId = 0;
+    params.shifterId = 1;
     params.deviceId = 0;
     params.shift_full_trial = data.mode==1;
     params.voc_duration = data.voc_duration_ms/1000;
@@ -227,8 +227,8 @@ function [data,params] = vowel_exp_recording
         params.shift_onset = data.shift_onset_ms(i)/1000;
         params.pitch_factor = data.pitch_level_sqs(i);
         params.control_ref_freq = params.ref_freq / data.pitch_level_sqs(i);
-        pitch_shifter(1, params);
-        while(pitch_shifter(0) == 0)
+        PsychPitchShifter(1, params);
+        while(PsychPitchShifter(0) == 0)
             pause(0.2);
         end
         [data.y_r{i}, data.y_ps{i}, data.voice_onset_s(i),data.static_pitch_factor_sqs{i}, data.var_pitch_factor_sqs{i}, data.control_pitch_factor_sqs{i},data.detected_pitch{i}] = PsychPitchShifter(-1);

@@ -1,4 +1,6 @@
 function [outdata,windowed_frame] = smbPitchShift(pitchShift,input,init)
+    %this is a translation of smbPitchShift.cpp to MATLAB code for
+    %simulation purposes
     if nargin < 3, init=false; end;
     
     fftFrameSize = 1024;

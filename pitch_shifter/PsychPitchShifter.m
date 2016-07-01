@@ -51,9 +51,9 @@
 %                       not only during the shift. [default: 0]
 %       std_dev:        the standard deviation of the white noise in cents.
 %                       [defualt: 100]
-%       fc:             the cutoff frequency of the noise filter normalized
-%                       to 1. Set it to 1 to bybass the filter.
-%                       [defualt: 0.01]
+%       fc:             the normalized cutoff frequency of the noise 
+%                       filter. Can have values between 0 and 1. Set it to
+%                       1 to bybass the filter. [defualt: 0.01]
 %       T_var:          Sets the sampling time of the stochastic process as
 %                       a multiple of the frame rate
 %                       (=sampleRate/frameSize). [default: 1]

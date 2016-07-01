@@ -71,8 +71,7 @@ function data = perc_adapt_exp_recording()
     
     data.frameSize = 64;
     data.Fs = 44100;
-    
-    data.shifter_function = @vowel_shifter_rubberband;
+
     data.rec_date = datetime('now');
     
     data.voc_duration_f = round(data.voc_duration_ms * data.Fs / data.frameSize / 1000);
@@ -95,31 +94,54 @@ function data = perc_adapt_exp_recording()
             'Visible', 'off',...
             'FontSize',14);
         
+    params.shifterId = 0;
+    params.deviceId = 0;
+    params.shift_full_trial = true;
+    params.voc_duration = data.voc_duration_ms/1000;
+    params.shift_duration = data.shift_duration_ms/1000;
+    params.start_threshold = 0.1;
+    params.stop_threshold = 0.1;
+
+        
     for i=1:data.n_trials
         txt_stop.Visible = 'off';
         
+        params.pitch_factor = data.pitch_level_var_sqs(i);
+        
         switch data.kind_of_trials(i)
             case 1 %feedback trial
-            	data.shifter_function(1, data.pitch_level_var_sqs(i), data.voc_duration_f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,1);
+                params.add_pink_noise = 0;
+                params.feedback_gain = 1;
+                params.play_ref_sound = 0;
+
                 txt_sn.String = sprintf('Session %i: feedback trial', i);
             case 2 %motor catch trial
-            	data.shifter_function(1, data.pitch_level_var_sqs(i), data.voc_duration_f, data.ref_freq_sqs(i), 0, 0, 0, 0, 0, 0, 0, 0, 0, data.noise_gain,0);
+                params.add_pink_noise = 1;
+                params.feedback_gain = 0;
+                params.play_ref_sound = 1;
+                params.ref_freq = data.ref_freq_sqs(i);
+                params.ref_amplitude = 0.1;
+                
                 txt_sn.String = sprintf('Session %i: motor catch trial', i);
             case 3 %perceptual catch trial
-                data.shifter_function(1, data.pitch_level_var_sqs(i), data.voc_duration_f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, data.noise_gain,0);
+                params.add_pink_noise = 1;
+                params.feedback_gain = 0;
+                params.play_ref_sound = 0;
+                
                 txt_sn.String = sprintf('Session %i: perceptual catch trial', i);
         end
+        PsychPitchShifter(1, params);
         drawnow;
-        while(data.shifter_function(0) == 0)
+        while(pitch_shifter(0) == 0)
             pause(0.2);
         end
-        if data.shifter_function(0) == 1
+        if PsychPitchShifter(0) == 1
             txt_stop.Visible = 'on';
-            while(data.shifter_function(0) ~= 2)
+            while(PsychPitchShifter ~= 2)
                 pause(0.2);
             end
         end
-        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),~, ~, ~,data.detected_pitch{i}] = data.shifter_function(-1);
+        [data.y_r{i}, data.y_ps{i}, data.voice_onset_f(i),~, ~, ~,data.detected_pitch{i}] = PsychPitchShifter(-1);
         data.voice_onset_ms(i) = data.voice_onset_f(i) * data.frameSize * 1000 / data.Fs;
        
         d = data.y_r{i}(data.voice_onset_f(i) * data.frameSize+0.2*data.Fs:(data.voice_onset_f(i)+data.voc_duration_f) * data.frameSize-0.1*data.Fs);

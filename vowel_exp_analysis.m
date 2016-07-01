@@ -1,4 +1,6 @@
 function data = vowel_exp_analysis(data)
+    % vowel_exp_analysis2 does pitch detection with the shrp
+    % algorithm
     data.max_pitch_change = 1; %[Hz/ms]
     data.frame_length = 40; %[ms]
     data.timestep = 5; %[ms]
