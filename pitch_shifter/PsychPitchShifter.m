@@ -82,6 +82,13 @@
 %                       [default: 0.01]
 %       stop_threshold: The threshold for the voice offset detection.
 %                       [default: 0.01]
+%       volume_normalization: Normalizes the output signal, by applying the
+%                       following transformation to the output signal s[t]:
+%                       x[t] = (1-tau)* x[t-1]+tau*s[t]^2
+%                       o[t] = s[t]*ln(sqrt(x[t])/delta+1)/(sqrt(x[t])/delta)
+%                       [default: 0]
+%       tau:            Volume normalisation constant (0<=tau<=1) [default: 0.5]
+%       delta:          Volume normalisation constant (delta > 0) [default: 0.5]
 %
 %   state = PsychPitchShifter(0):
 %       Returns a value according to the current state.

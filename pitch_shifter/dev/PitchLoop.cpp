@@ -6,8 +6,6 @@
 #include "Stk.h"
 #include "RtAudio.h"
 
-
-
 #include "cpvPitchShift.h"
 #include "smbPitchShift.h"
 
@@ -19,12 +17,18 @@ using namespace RubberBand;
 #endif
 
 
-
 using namespace std;
 using namespace stk;
 
+void volume_normalizer(double *frame);
+
+bool volume_normalization = false;
+double volume_normalization_timeconst = 0;
+double volume_normalization_delta = 0;
+
 int deviceId = 0;
 int shifterId = 0;
+int windowSize = 1024;
 
 const int frameSize = 64;
 const int sampleRate = 44100;
@@ -49,7 +53,7 @@ double output[frameSize];
 double *output_p = output;
 int i_frame;
 
-const size_t data_array_length = 10*sampleRate;
+const size_t data_array_length = 20*sampleRate;
 double signal[data_array_length];
 
 
@@ -68,10 +72,10 @@ void init(void){
     
     switch(shifterId){
         case 0:
-            smbPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+            smbPitchShiftInit(frameSize, windowSize, sampleRate);
             break;
         case 1:
-            cpvPitchShiftInit(frameSize, 1024/frameSize, sampleRate);
+            cpvPitchShiftInit(frameSize, windowSize, sampleRate);
             break;
         #if defined RUBBERBAND
         case 2:
@@ -136,6 +140,9 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
             break;
         #endif
     }
+
+	//normalize volume
+	if (volume_normalization) volume_normalizer(output);
     
     if(prev_pitch_factor == pitch_factor){    
         for (int i=0; i<frameSize; i++ ){  
@@ -265,10 +272,36 @@ void mexFunction(int nlhs, mxArray *plhs[],
             pitch_factor = 1;
             shifterId = 0;
             deviceId = 0;
+			volume_normalization = false;
+			volume_normalization_timeconst = 0.5;
+			volume_normalization_delta = 0.5;
             
             if(nrhs>2) pitch_factor = mxGetScalar(prhs[2]);
             if(nrhs>3) shifterId =  mxGetScalar(prhs[3]);
             if(nrhs>4) deviceId = mxGetScalar(prhs[4]);
+			if(nrhs>5) volume_normalization = (bool) mxGetScalar(prhs[5]);
+			if (nrhs>6) volume_normalization_timeconst = mxGetScalar(prhs[6]);
+			if (volume_normalization_timeconst < 0) volume_normalization_timeconst = 0;
+			if (volume_normalization_timeconst > 1) volume_normalization_timeconst = 1;
+
+			if (nrhs>7) volume_normalization_delta = mxGetScalar(prhs[7]);
+			if (volume_normalization_delta <= 0) volume_normalization_delta = 1e-10;
+
+			if (nrhs>8) {
+				int tid = int(mxGetScalar(prhs[8]));
+				if (tid == 0) {
+					windowSize = 512;
+				}
+				else if (tid == 2) {
+					windowSize = 2048;
+				}
+				else {
+					windowSize = 1024;
+				}
+			}
+			else {
+				windowSize = 1024;
+			}
             
             init();
             start_stream();
@@ -280,5 +313,16 @@ void mexFunction(int nlhs, mxArray *plhs[],
     }
     
     return;
+}
+
+//smooth power of output signal
+void volume_normalizer(double *frame) {
+	static double filterd_power = 0;
+
+	for (int i = 0; i < frameSize; ++i) {
+		filterd_power = (1 - volume_normalization_timeconst)*filterd_power + volume_normalization_timeconst * frame[i] * frame[i];
+		double x = sqrt(filterd_power) / volume_normalization_delta;
+		if (x>0) frame[i] = frame[i] * log(x + 1) / x;
+	}
 }
 

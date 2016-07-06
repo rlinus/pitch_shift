@@ -40,7 +40,9 @@ void gen_beep_sound(double f, double amp);
 void gen_piano_sound(double f, double amp);
 void gen_drum_sound(double f, double amp);
 double draw_var(bool init = false);
+void stop_stream_if_running(void);
 std::string get_mex_path(void);
+void volume_normalizer(double *frame);
 
 
 const int frameSize = 64;
@@ -152,6 +154,10 @@ int control_delay_f = 0.1*sampleRate/(double)frameSize;
 double control_error = 0;
 double control_error_sum = 0;
 
+bool volume_normalization = false;
+double volume_normalization_timeconst = 0;
+double volume_normalization_delta = 0;
+
 void init(void){
     Stk::setSampleRate(sampleRate);
     Stk::setRawwavePath(get_mex_path()+"rawwaves/");
@@ -206,6 +212,11 @@ void init(void){
 int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
          double streamTime, RtAudioStreamStatus status, void *dataPointer )
 {
+	if (i_frame >= int(data_array_length) / frameSize - 1) {
+		if (i_frame == int(data_array_length) / frameSize - 1) mexPrintf("internall buffer full! Max. rec duration is 120s. Please stop the session.\n");
+		return 0;
+	}
+
     i_frame++;
 
 // 	if(status == RTAUDIO_INPUT_OVERFLOW){
@@ -354,12 +365,11 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         #endif
     }
 
-    
-    //if(i_frame>=window_length_factor*4){
+	//normalize volume
+	if (volume_normalization) volume_normalizer(output);
+
+
     memcpy(&output_signal[i_frame*frameSize],output,frameSize*sizeof(double));
-    //}
-    
-     //memcpy(&output_signal[i_frame*frameSize],ibuffer,frameSize*sizeof(double));
     
         
     for (int i=0; i<frameSize; i++ ){  
@@ -453,14 +463,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
         int v1 = (int) floor(mxGetScalar(prhs[0]));
         
         if(v1 < 0){
-            try {
-                if(dac.isStreamRunning()) dac.stopStream();
-                dac.closeStream();
-            }
-            catch ( RtAudioError &error ) {
-                error.printMessage();
-                return;
-            }
+			//stop stream and return data
+			stop_stream_if_running();
 
             mxArray *input_signal_m = mxCreateDoubleMatrix((i_frame+1)*frameSize,1,mxREAL);
             double *input_signal_mp = mxGetPr(input_signal_m);
@@ -502,13 +506,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
             return;
         } else if(v1==0){
+			//get stream status
             plhs[0] = mxCreateDoubleScalar(is_finished);
             return;
         } else {
-            if(dac.isStreamRunning() || dac.isStreamOpen()){
-                mexErrMsgIdAndTxt("rt_pitch_shifter:openStream", "Stream is already open.");
-                return;
-            }     
+			//init and start stream
             
             if(nlhs>0) {
                 mexErrMsgIdAndTxt("rt_pitch_shifter:nlhs", "Too many output arguments.");
@@ -524,6 +526,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 mexErrMsgIdAndTxt("rt_pitch_shifter:wronginput", "Second argument must be a struct.");
                 return;
             }
+
+			//stop stream if not stoped before
+			stop_stream_if_running();
             
             //get input parameters
             mxArray * fieldptr;
@@ -781,6 +786,33 @@ void mexFunction(int nlhs, mxArray *plhs[],
             }else{
                 windowSize = 1024;
             }
+
+			fieldptr = mxGetField(prhs[1], 0, "volume_normalization");
+			if (fieldptr) {
+				volume_normalization = bool(mxGetScalar(fieldptr));
+			}
+			else {
+				volume_normalization = false;
+			}
+
+			fieldptr = mxGetField(prhs[1], 0, "tau");
+			if (fieldptr) {
+				volume_normalization_timeconst = double(mxGetScalar(fieldptr));
+				if (volume_normalization_timeconst < 0) volume_normalization_timeconst = 0;
+				if (volume_normalization_timeconst > 1) volume_normalization_timeconst = 1;
+			}
+			else {
+				volume_normalization_timeconst = 0.5;
+			}
+
+			fieldptr = mxGetField(prhs[1], 0, "delta");
+			if (fieldptr) {
+				volume_normalization_delta = double(mxGetScalar(fieldptr));
+				if (volume_normalization_delta <= 0) volume_normalization_delta = 1e-10;
+			}
+			else {
+				volume_normalization_delta = 0.5;
+			}
             
             //get noise
             if(add_pink_noise){
@@ -815,6 +847,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
     return;
 }
 
+void stop_stream_if_running(void) {
+	try {
+		if (dac.isStreamOpen()) {
+			if (dac.isStreamRunning()) dac.stopStream();
+			dac.closeStream();
+		}
+	}
+	catch (RtAudioError &error) {
+		mexPrintf("Error in audio stream management!\n");
+		return;
+	}
+	return;
+}
+
 double frameAmplitude(double *samples) {
     double sum = 0;
     for(int i = 0; i < frameSize; ++i) {
@@ -840,6 +886,7 @@ double mov_avg(double e){
     return sum/mov_avg_width;
 }
 
+//average filterd signal power of the input signal
 double sig_power(void){
     if(i_frame < sig_power_width) return 0;
     
@@ -851,6 +898,17 @@ double sig_power(void){
     }
     
     return sum/(sig_power_width*frameSize);
+}
+
+//smooth power of output signal
+void volume_normalizer(double *frame) {
+	static double filterd_power = 0;
+
+	for (int i = 0; i < frameSize; ++i) {
+		filterd_power = (1 - volume_normalization_timeconst)*filterd_power + volume_normalization_timeconst * frame[i] * frame[i];
+		double x = sqrt(filterd_power) / volume_normalization_delta;
+		if(x>0) frame[i] = frame[i]*log(x + 1) / x;
+	}
 }
 
 void gen_beep_sound(double f, double amp){
@@ -903,6 +961,7 @@ void gen_drum_sound(double f, double amp){
 //     return pow(2.0,v/1200.0);
 // }
 
+//get random walk sample
 double draw_var(bool init){
     //second order butterworth filter (see: http://www.kwon3d.com/theory/filtering/fil.html)
     
@@ -964,6 +1023,9 @@ double draw_var(bool init){
     
 }
 
+
+
+//gets the path of the executed mex file
 std::string get_mex_path(void){
     mxArray *rhs[1], *lhs[1];
     char *path, *name;

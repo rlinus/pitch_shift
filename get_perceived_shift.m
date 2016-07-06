@@ -1,11 +1,12 @@
-function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shift)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-    step_size = 10;
+function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shift, params)
+%get_perceived_shift plays signal in endless loop and opens gui in which
+%the subject can dynamically choose a pitch shift with the mouse wheel.
+
+    step_size = 10; %increment size of the pitch shift
 
     sel_shift = init_shift;
     
-    pitch_loop(1,signal,2^(sel_shift/1200),2,0);
+    PitchLoop(1,signal,2^(sel_shift/1200),params.shifterId,params.deviceId,params.volume_normalization,params.tau,params.delta,params.windowSize);
 
     invalid_trial=0;
 
@@ -38,7 +39,7 @@ function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shi
 
 
     uiwait(ui);
-    pitch_loop(-1);
+    PitchLoop(-1);
     
     perceived_shift = sel_shift;
     
@@ -46,7 +47,7 @@ function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shi
 
     function wheel_clb(src,callbackdata)
         sel_shift = sel_shift - callbackdata.VerticalScrollCount * step_size;
-        pitch_loop(0,2^(sel_shift/1200));
+        PitchLoop(0,2^(sel_shift/1200));
     end
 
     function ok_clb(src,callbackdata)
