@@ -3,7 +3,7 @@ function outdata = perc_adapt_plot(data)
 %   Detailed explanation goes here
 
 for i=1:data.n_trials
-    b = round((data.voice_onset_ms(i)+300)/1000*data.Fs/data.frameSize);
+    b = round((data.voice_onset_s(i)+0.3)*data.Fs/data.frameSize);
     e = round(0.1*data.Fs/data.frameSize);
     p = data.detected_pitch{i}(b:end-e);
     outdata.produced_freq_mean(i) = mean(p(p~=0));
