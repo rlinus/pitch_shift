@@ -15,31 +15,26 @@ function make(varargin)
         return;
     end
     
+    stk_ver = '4.5.1';
+    stk_path = ['../stk-' stk_ver '/src/'];
+    stk_include_path = ['-I../stk-' stk_ver '/include'];
+    stk_asio_include_path = ['-I../stk-' stk_ver '/src/include'];
+    
     if strcmpi(varargin{1},'libs')
         % compile extern code
-        mex ../stk-4.5.0/src/include/asio.cpp -DWIN32 -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include
-        mex ../stk-4.5.0/src/include/asiolist.cpp  -DWIN32 -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include
-        mex ../stk-4.5.0/src/include/asiodrivers.cpp  -DWIN32 -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include
-        mex ../stk-4.5.0/src/include/iasiothiscallresolver.cpp  -DWIN32 -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include
         
-        mex ../stk-4.5.0/src/Stk.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/RtAudio.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__  -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FM.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/ADSR.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FileLoop.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/SineWave.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Wurley.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FileWvIn.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/FileRead.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/TwoZero.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Rhodey.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/BeeThree.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Drummer.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/OnePole.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/LentPitShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/PitShift.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/Delay.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
-        mex ../stk-4.5.0/src/DelayL.cpp -D__LITTLE_ENDIAN__ -D__WINDOWS_ASIO__ -D__WINDOWS_MM__ -c -I../stk-4.5.0/src/include -I../stk-4.5.0/include
+        stk_asio_files = dir([stk_path '/include/*.cpp']);
+        for i=1:length(stk_asio_files)
+            mex([stk_path '/include/' stk_asio_files(i).name],'-DWIN32', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_asio_include_path);
+        end
+        
+        stk_files = dir([stk_path '/*.cpp']);
+        for i=1:length(stk_files)
+            mex([stk_path '/' stk_files(i).name],'-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_include_path, stk_asio_include_path);
+        end
+
+        %mex([stk_path '/include/*.cpp'],'-DWIN32', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_asio_include_path);
+        %mex([stk_path '/*.cpp'],'-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_include_path, stk_asio_include_path);
         
         mex ../rubberband-1.8.1/src/RubberBandStretcher.cpp -DWIN32  -D__MSVC__ -DUSE_KISSFFT -DUSE_SPEEX -c -I../rubberband-1.8.1
 
@@ -74,21 +69,22 @@ function make(varargin)
         mex ../rubberband-1.8.1/src/system/sysutils.cpp -DWIN32  -D__MSVC__ -DUSE_KISSFFT -DUSE_SPEEX -c -I../rubberband-1.8.1 -I../rubberband-1.8.1/src
         mex ../rubberband-1.8.1/src/system/Allocators.cpp -DWIN32  -D__MSVC__ -DUSE_KISSFFT -DUSE_SPEEX -c -I../rubberband-1.8.1 -I../rubberband-1.8.1/src
     elseif strcmpi(varargin{1},'PsychPitchShifter')
-        mex('../PsychPitchShifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', '-I../rubberband-1.8.1/rubberband');
-        mex ../smbPitchShift.cpp -c -I../stk-4.5.0/include
+        mex('../PsychPitchShifter.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_include_path, '-I../rubberband-1.8.1/rubberband');
+        mex ../smbPitchShift.cpp -c 
         mex ../dywapitchtrack.c -c
-        mex ../cpvPitchShift.cpp -c -I../stk-4.5.0/include
+        mex ../cpvPitchShift.cpp -c
         mex PsychPitchShifter.obj smbPitchShift.obj cpvPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj -L../ -lfftw3-3.lib -output ../../PsychPitchShifter
+
         
-        %mex('../PsychTest.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', '-I../rubberband-1.8.1/rubberband');
+        %mex('../PsychTest.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_include_path, '-I../rubberband-1.8.1/rubberband');
         %mex PsychTest.obj smbPitchShift.obj cpvPitchShift.obj dywapitchtrack.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj -L../ -lfftw3-3.lib -output ../../PsychTest
     elseif strcmpi(varargin{1},'PitchLoop')
-        mex('../PitchLoop.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', '-I../stk-4.5.0/include', '-I../rubberband-1.8.1/rubberband');
-        mex ../smbPitchShift.cpp -c -I../stk-4.5.0/include
-        mex ../cpvPitchShift.cpp -c -I../stk-4.5.0/include
+        mex('../PitchLoop.cpp', '-D__LITTLE_ENDIAN__', '-D__WINDOWS_ASIO__', '-D__WINDOWS_MM__', '-c', stk_include_path, '-I../rubberband-1.8.1/rubberband');
+        mex ../smbPitchShift.cpp -c
+        mex ../cpvPitchShift.cpp -c
         mex PitchLoop.obj smbPitchShift.obj cpvPitchShift.obj Stk.obj RtAudio.obj FM.obj ADSR.obj FileLoop.obj Delay.obj DelayL.obj SineWave.obj Wurley.obj Rhodey.obj BeeThree.obj Drummer.obj OnePole.obj LentPitShift.obj PitShift.obj FileWvIn.obj FileRead.obj TwoZero.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj RubberBandStretcher.obj StretchCalculator.obj StretcherChannelData.obj StretcherImpl.obj StretcherProcess.obj SpectralDifferenceAudioCurve.obj SilentAudioCurve.obj PercussiveAudioCurve.obj HighFrequencyAudioCurve.obj ConstantAudioCurve.obj CompoundAudioCurve.obj Profiler.obj Resampler.obj FFT.obj AudioCurveCalculator.obj getopt_long.obj getopt.obj kiss_fftr.obj kiss_fft.obj resample.obj VectorOpsComplex.obj Thread.obj sysutils.obj Allocators.obj -L../ -lfftw3-3.lib -output ../../PitchLoop
     elseif strcmpi(varargin{1},'PrintDeviceList')
-        mex('../PrintDeviceList.cpp', '-c', '-I../stk-4.5.0/include');
+        mex('../PrintDeviceList.cpp', '-c', stk_include_path);
         mex PrintDeviceList.obj Stk.obj RtAudio.obj asio.obj asiolist.obj asiodrivers.obj iasiothiscallresolver.obj -output ../../PrintDeviceList
     else
         fprintf('invalid input\n');

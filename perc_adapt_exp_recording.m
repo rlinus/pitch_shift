@@ -41,12 +41,12 @@ function data = perc_adapt_exp_recording()
     % trials, after shift trials).
     
     % Define the number of trials in each phase here
-    data.n_pre_fb_trials = 1;
+    data.n_pre_fb_trials = 0;
     data.n_pre_mct_trials = 0;
     data.n_pre_pct_trials = 0;
     
     data.n_post_fb_trials = 0; 
-    data.n_post_mct_trials = 0;
+    data.n_post_mct_trials = 1;
     data.n_post_pct_trials = 0;
     
     data.n_trans_trials = 0;
