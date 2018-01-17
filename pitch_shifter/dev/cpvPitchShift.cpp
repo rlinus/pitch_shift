@@ -138,7 +138,7 @@ void cpvPitchShift(double pitchShift, double *indata, double *outdata)
     fftw_execute(cpvData.pifft);
     
     for(k=0; k < cpvData.fftFrameSize; k++) {
-        cpvData.gFFTworksp_real[k] = cpvData.window[k]*cpvData.gFFTworksp_real[k]/cpvData.fftFrameSize/(cpvData.osamp*3/(double)8);
+        cpvData.gFFTworksp_real[k] = cpvData.window[k]*cpvData.gFFTworksp_real[k]/cpvData.fftFrameSize/(cpvData.osamp*3/(double)8)*Hopratio;
     }
     
     interpft(ifftFrameSize);
@@ -204,7 +204,7 @@ void interpft(int ny){
     
     fftw_execute(inpifft);
     
-    double norm = (double)ny/(m*sqrt((double)m*ny));
+    double norm = 1.0/(double) m ; //(double)ny/(m*sqrt((double)m*ny));
     
     for(int i=0;i<ny;++i){
         cpvData.interpOutput[i] = cpvData.gFFTworksp_real[i*incr]*norm;

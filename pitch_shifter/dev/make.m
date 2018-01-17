@@ -1,6 +1,7 @@
 function make(varargin)
     %this script can be used to compile and link the pitch shifter
-    %functions
+    %functions (compiles with visual studio 2013, doesn't compile with
+    %visual studio 2015)
 
 
     currentFolder = pwd;

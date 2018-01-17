@@ -256,7 +256,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 return;
             }   
             
-            if( nrhs < 2 || !mxIsDouble(prhs[1]) || mxIsComplex(prhs[1]) || (mxGetM(prhs[0])>1 && mxGetN(prhs[0])>1)) {
+            if( nrhs < 2 || !mxIsDouble(prhs[1]) || mxIsComplex(prhs[1]) || (mxGetM(prhs[1])>1 && mxGetN(prhs[1])>1)) {
                 mexErrMsgIdAndTxt("rt_pitch_shifter:notVector", "Second input must be a vector.");
                 return;
             }

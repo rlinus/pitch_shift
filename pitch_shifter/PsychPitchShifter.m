@@ -115,6 +115,16 @@
 %                       get the accumulated applied pitch shift.
 %           dpitch:     The sequence of detected pitches. The do_control
 %                       feature relies on pitch detection, this is the
-%                       output of the internal pitch detection algorithm.                           
+%                       output of the internal pitch detection algorithm.
+%
+%    PsychPitchShifter(2,params,input):
+%       Offline mode. Does not record from audio device but process a given
+%       input signal. The call blocks till the whole signal is processed.
+%       The processed signal can then be retrieved with:
+%       [x,y,voice_on,stc_pf,var_pf,ctrl_pf,dpitch] = PsychPitchShifter(-1);
+%       
+%           input:      Audio signal as a double vector.
+%           params:     Parameters as in PsychPitchShifter(1,params) (see
+%                       above)
 %__________________________________________________________________________
 % (c) 2015 Linus Ruettimann (linus[dot]ruettimann[at]gmail[dot]com)

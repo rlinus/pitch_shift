@@ -14,6 +14,7 @@
 #include <minmax.h>
 
 
+
 #include "cpvPitchShift.h"
 #include "smbPitchShift.h"
 
@@ -335,7 +336,6 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
             break;
         case 1:
             cpvPitchShift(static_factor*var_factor*control_factor, ibuffer, output);
-			//memcpy(output, ibuffer,sizeof(input_signal[0])*nBufferFrames);
             break;
         #if defined RUBBERBAND
         case 2:
@@ -837,33 +837,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 mxDestroyArray(num_samples_m);
             }
             
-			init();
-			
-            if(v1==1) {
-				//start stream
-				start_stream();
-			} else {
-				//offline mode
-				if( nrhs < 3) {
-					mexErrMsgIdAndTxt("rt_pitch_shifter:missinginput", "Need at least three input arguments for offline mode.");
-					return;
-				}
-				
-				if( nrhs < 2 || !mxIsDouble(prhs[2]) || mxIsComplex(prhs[2]) || (mxGetM(prhs[2])>1 && mxGetN(prhs[2])>1)) {
-					mexErrMsgIdAndTxt("rt_pitch_shifter:notVector", "Third input must be a vector.");
-					return;
-				}
             
-				int signal_length = ((int)(mxGetNumberOfElements(prhs[2])/frameSize))*frameSize;
-
-				double *prhs1 = mxGetPr(prhs[2]);
-				
-				double outputBuffer[2*frameSize];
-				
-				for(int i = 0; i < signal_length; i += frameSize){
-					tick( (void*) outputBuffer, (void*) &prhs1[i], frameSize, 0.0, 0, NULL);
-				}
-			}
+            //start stream
+            init();
+            start_stream();
         }
     }
     
