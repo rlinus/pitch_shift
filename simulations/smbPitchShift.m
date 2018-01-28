@@ -4,7 +4,7 @@ function [outdata,windowed_frame] = smbPitchShift(pitchShift,input,init)
     if nargin < 3, init=false; end;
     
     fftFrameSize = 1024;
-    stepSize =64;
+    stepSize = 64;
     sampleRate = 44100;
     
     osamp = fftFrameSize/stepSize;

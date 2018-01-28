@@ -12,6 +12,7 @@
 #include "Drummer.h"
 #include "dywapitchtrack.h"
 #include <minmax.h>
+#include <memory>
 
 
 #include "cpvPitchShift.h"
@@ -56,10 +57,11 @@ RtAudio dac;
                                         RubberBandStretcher::OptionFormantPreserved |
                                         RubberBandStretcher::OptionWindowShort |
                                         //RubberBandStretcher::OptionSmoothingOn |
-                                        //RubberBandStretcher::OptionPhaseIndependent |
                                         RubberBandStretcher::OptionTransientsSmooth |
-                                        RubberBandStretcher::OptionPitchHighQuality;//Consistency;
-    RubberBandStretcher shifter(sampleRate,1,options,1.0,1.0);
+										RubberBandStretcher::OptionPhaseIndependent |
+                                        RubberBandStretcher::OptionPitchHighConsistency; //Quality;//Consistency;
+										//RubberBandStretcher::OptionPitchHighQuality; //Quality;//Consistency;
+    std::unique_ptr<RubberBandStretcher> shifter;
 #endif
 
 _dywapitchtracker pitchtracker;
@@ -157,6 +159,8 @@ bool volume_normalization = false;
 double volume_normalization_timeconst = 0;
 double volume_normalization_delta = 0;
 
+int rubberbandFramesRequired = 0;
+
 void init(void){
     Stk::setSampleRate(sampleRate);
     Stk::setRawwavePath(get_mex_path()+"rawwaves/");
@@ -202,7 +206,12 @@ void init(void){
             break;
         #if defined RUBBERBAND
         case 2:
-            shifter.reset();
+			shifter.reset(new RubberBandStretcher(sampleRate,1,options,1.0,1.0));
+            //shifter->reset();
+			shifter->setMaxProcessSize(frameSize);
+			rubberbandFramesRequired = shifter->getSamplesRequired() / frameSize;
+			//mexPrintf("latency: %i\n",shifter->getLatency());
+			//mexPrintf("framesRequired: %i\n", rubberbandFramesRequired);
             break;
         #endif   
     }
@@ -314,7 +323,7 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
         control_factor = 1;
     }
     
-    if (voice_onset_f == -1 && amp > start_threshold && i_frame > ref_sound_duration_f){
+    if (voice_onset_f == -1 && amp > start_threshold && (!play_ref_sound || i_frame > ref_sound_duration_f)){
             voice_onset_f = i_frame;
     }
     
@@ -347,16 +356,18 @@ int tick( void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
                 in[i] = (float) ibuffer[i];
             }
 
-            shifter.setPitchScale(static_factor*var_factor*control_factor);
-            shifter.process(&in_p, frameSize,0);
-            int r = shifter.available();
+            shifter->setPitchScale(static_factor*var_factor*control_factor);
+            shifter->process(&in_p, frameSize,0);
+            int r = shifter->available();
 
-            if(r>=frameSize && i_frame+1>=18){
-                shifter.retrieve(&out_p, frameSize);
+            if(r>=frameSize && i_frame+1>=rubberbandFramesRequired+2){
+			//if(r>=frameSize){
+                shifter->retrieve(&out_p, frameSize);
                 for(int i=0; i < frameSize; ++i){
                     output[i] = out[i];
                 }
             }else{
+				//if (i_frame+1>=rubberbandFramesRequired+2) mexPrintf("no data in frame %i\n", i_frame);
                 for(int i=0; i < frameSize; ++i){
                     output[i] = 0;
                 }
@@ -778,13 +789,17 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 int tid = int(mxGetScalar(fieldptr));
                 if(tid == 0) {
                     windowSize = 512;
+					options |= RubberBandStretcher::OptionWindowShort;
                 } else if(tid == 2) {
                     windowSize = 2048;
+					options &= ~RubberBandStretcher::OptionWindowShort;	//=OptionWindowStandard			
                 } else {
                     windowSize = 1024;
+					options |= RubberBandStretcher::OptionWindowShort;
                 }
             }else{
                 windowSize = 1024;
+				options |= RubberBandStretcher::OptionWindowShort;
             }
 
 			fieldptr = mxGetField(prhs[1], 0, "volume_normalization");
@@ -835,6 +850,35 @@ void mexFunction(int nlhs, mxArray *plhs[],
                 }
                 mxDestroyArray(pink_noise_m);
                 mxDestroyArray(num_samples_m);
+            }
+			
+			fieldptr = mxGetField(prhs[1], 0, "rubberbandOptionPitch");
+			options &= ~(RubberBandStretcher::OptionPitchHighQuality | RubberBandStretcher::OptionPitchHighConsistency);
+            if(fieldptr){
+                int tid = int(mxGetScalar(fieldptr));
+                if(tid == 0) {
+					options |= RubberBandStretcher::OptionPitchHighSpeed;
+                } else if(tid == 2) {
+					options |= RubberBandStretcher::OptionPitchHighConsistency;		
+                } else {
+					options |= RubberBandStretcher::OptionPitchHighQuality;
+                }
+            }else{
+				options |= RubberBandStretcher::OptionPitchHighQuality;
+            }
+			
+			fieldptr = mxGetField(prhs[1], 0, "rubberbandOptionPhase");
+			options &= ~(RubberBandStretcher::OptionPhaseIndependent);
+            if(fieldptr){
+                int tid = int(mxGetScalar(fieldptr));
+                if(tid == 1) {
+					options |= RubberBandStretcher::OptionPhaseIndependent;
+                } else {
+					options |= RubberBandStretcher::OptionPhaseLaminar;
+                }
+            }else{
+                windowSize = 1024;
+				options |= RubberBandStretcher::OptionPhaseLaminar;
             }
             
 			init();

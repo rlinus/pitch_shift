@@ -210,6 +210,7 @@ void interpft(int ny){
         cpvData.interpOutput[i] = cpvData.gFFTworksp_real[i*incr]*norm;
     }
     
+    fftw_destroy_plan(inpifft);
     return;
 }
 

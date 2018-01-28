@@ -10,7 +10,7 @@ T= T_f*frameSize/sampleRate;
 
 t=(1/sampleRate:1/sampleRate:T);
 
-f=400;
+f=320.2;
 sig = sin(2*pi*f*t);%+0.5*sin(2*pi*2*f*t)+0.25*sin(2*pi*4*f*t);
 %sig = data.y_r{2}(5000:end);
 
@@ -20,9 +20,9 @@ for i=1:T_f
 %     cents = -1*floor(i/100);
 %     pitchShift=2^(cents/1200);
 %pitchShift = 0.9+floor(i/100)*0.01;
-    if i==500,pitchShift=2^(000/1200);end;
-    if i==1000,pitchShift=2^(-500/1200);end;
-    if i==1500,pitchShift=2^(500/1200);end;
+    if i==200,pitchShift=2^(-200/1200);end;
+    if i==1000,pitchShift=2^(-000/1200);end;
+    if i==1500,pitchShift=2^(000/1200);end;
     %[outdata(1+(i-1)*frameSize:i*frameSize),windowed_frame(i,:)] = smbPitchShift(pitchShift,sig(1+(i-1)*frameSize:i*frameSize),i==1);
     [outdata(1+(i-1)*frameSize:i*frameSize),windowed_frame(i,:)] = cpvPitchShift(pitchShift,sig(1+(i-1)*frameSize:i*frameSize),i==1);
 end

@@ -5,8 +5,9 @@ function [perceived_shift, invalid_trial] = get_perceived_shift(signal, init_shi
     step_size = 10; %increment size of the pitch shift
 
     sel_shift = init_shift;
+    params.pitch_factor = init_shift;
     
-    PitchLoop(1,signal,2^(sel_shift/1200),params.shifterId,params.deviceId,params.volume_normalization,params.tau,params.delta,params.windowSize);
+    PitchLoop(1,params, signal);
 
     invalid_trial=0;
 
